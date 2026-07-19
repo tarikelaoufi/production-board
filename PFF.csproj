@@ -149,6 +149,16 @@
     <Folder Include="JS\" />
     <Folder Include="Models\" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ProductionBoard.Core\ProductionBoard.Core.csproj">
+      <Project>{e83479ac-5f1e-48af-bdb5-683173956552}</Project>
+      <Name>ProductionBoard.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ProductionBoard.Data\ProductionBoard.Data.csproj">
+      <Project>{de2d4858-6875-495b-a7b0-641da4b1d7b1}</Project>
+      <Name>ProductionBoard.Data</Name>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
