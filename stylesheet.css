@@ -1,0 +1,705 @@
+﻿
+@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css");
+@import "stylesheet.css";
+body {
+    font-family: Arial;
+    font-size: 17px;
+    padding: 8px;
+    background-image: linear-gradient(#6dd5ed,#1c92d2);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-size: cover;
+}
+
+table, th, td {
+    border: 1px solid #dddddd; /*-light grey border*/
+    border-collapse: collapse;
+}
+
+/* Style for the dialog */
+#myDialog, #myDialog2, #myDialog3, #myDialog4, #myDialog5, #myDialog6, #myDialog7, #myDialog8 #myDialog9 {
+    border: none;
+    background-color: White;
+    width: 350px; /* Set the width */
+    height: 400px; /* Set the height */
+}
+
+
+
+
+
+
+
+
+
+.dbox {
+    position: relative;
+    width: 85px;
+    height: 34px; /*table header or head th td size */
+}
+/* add diagonal line */
+.dbox:after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    margin: auto;
+    z-index: -1;
+    background: linear-gradient(to top right, transparent calc(50% - 1px), #6AABD2, transparent calc(50% + 1px) );
+}
+/* align boxes with headings */
+.dheading_tr,
+.dheading_bl {
+    position: absolute;
+    /* or wider if needed/possible */
+    width: 65%;
+    height: 60%;
+    overflow: hidden;
+}
+
+.dheading_tr {
+    top: 0;
+    right: 0;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+}
+
+.dheading_bl {
+    bottom: 0;
+    left: 0;
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-end;
+}
+
+.custom-row .dbox:after {
+    background: linear-gradient(to top right, transparent calc(50% - 1px), Red, transparent calc(50% + 1px));
+    background-color: #6AABD2;
+}
+
+.round { /* Style the timing */
+    border: none;
+    border-radius: 15px;
+    padding: 3px;
+    background: #6AABD2;
+    color: white;
+}
+
+
+/* Style the clickable background div */
+#reel_h1, #reel_h2, #reel_h3, #reel_h4, #reel_h5, #reel_h6, #reel_h7, #reel_h8,
+#rubut_h1, #rubut_h2, #rubut_h3, #rubut_h4, #rubut_h5, #rubut_h6, #rubut_h7, #rubut_h8 {
+    text-align: right;
+    width: 100px;
+    height: 100px;
+    color: black;
+    background-color: none;
+    cursor: pointer; /* Change cursor to pointer on hover */
+}
+
+#cumulrubut_h1, #cumulrubut_h2, #cumulrubut_h3, #cumulrubut_h4, #cumulrubut_h5, #cumulrubut_h6, #cumulrubut_h7, #cumulrubut_h8,
+#cumul_h1, #cumul_h2, #cumul_h3, #cumul_h4, #cumul_h5, #cumul_h6, #cumul_h7, #cumul_h8 {
+    text-align: left;
+    width: 150px;
+    height: -120px;
+    color: black;
+    background-color: none;
+    cursor: pointer; /* Change cursor to pointer on hover */
+}
+
+.Commentaire {
+    text-align: center;
+    color: black;
+    background-color: none;
+    cursor: pointer; /* Change cursor to pointer on hover */
+}
+
+.text_Iindent {
+    text-indent: 500px;
+}
+
+.th-color {
+    color: white;
+    background-color: #6AABD2;
+}
+
+
+
+
+/* Container styles */
+.container {
+    max-width: 700px;
+    width: 100%;
+    background-color: #fff;
+    padding: 25px 30px;
+    border-radius: 5px;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
+}
+
+    /* Title styles */
+    .container .title {
+        font-size: 25px;
+        font-weight: 500;
+        position: relative;
+        color: #6AABD2;
+    }
+
+/* Form content styles */
+.content form .user-details {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin: 20px 0 12px 0;
+}
+
+/* Input box styles */
+form .user-details .input-box {
+    margin-bottom: 15px;
+    width: calc(100% / 2 - 20px);
+}
+
+/* Label details styles */
+form .input-box span.details {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 5px;
+}
+
+
+/* Category styles */
+form .category {
+    display: flex;
+    width: 60%;
+    margin: 14px 0;
+    justify-content: space-between;
+}
+
+    /* Category label styles */
+    form .category label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+    }
+
+        /* Category dot styles */
+        form .category label .dot {
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            margin-right: 10px;
+            transition: all 0.3s ease;
+        }
+
+/* Media queries for responsiveness */
+@media (max-width: 584px) {
+    .container {
+        max-width: 100%;
+    }
+
+    form .user-details .input-box {
+        margin-bottom: 15px;
+        width: 100%;
+    }
+
+    form .category {
+        width: 100%;
+    }
+
+    .content form .user-details {
+        max-height: 300px;
+        overflow-y: scroll;
+    }
+
+    .user-details::-webkit-scrollbar {
+        width: 5px;
+    }
+}
+
+@media (max-width: 459px) {
+    .container .content .category {
+        flex-direction: column;
+    }
+}
+
+
+
+/* style.css */
+body {
+    margin: 0;
+    font-family: "Arial", sans-serif; /* 
+	background-image: url('hero-bg.jpg');
+background-repeat: no-repeat;
+  background-attachment: fixed;  
+  background-size: cover; */
+}
+
+
+#HideItem, #HideItem2, #HideItem3, #HideItem4, #HideItem5, #HideItem6, #HideItem7, #closeBtn {
+    display: none
+}
+
+#sidebar-close {
+    display: none;
+    color: #333;
+}
+
+.sideMenu {
+    height: 100%;
+    width: 100px;
+    position: fixed;
+    margin-left: 10px;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    background: none;
+    overflow-x: hidden;
+    transition: 0.2s;
+    padding-top: 40px;
+}
+
+.mainMenu h2 {
+    text-align: center;
+    letter-spacing: 7px;
+    color: #6AABD2;
+    padding: 10px 0;
+}
+
+.sideMenu a {
+    padding: 0px 0px 1px 32px;
+    text-decoration: underline;
+    color: #fff;
+    display: block;
+    transition: 0.3s;
+    font-size: 18px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.mainMenu a:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+
+.sideMenu .closeBtn {
+    position: absolute;
+    top: 0;
+    right: 25px;
+    font-size: 70px;
+    margin-left: 50px;
+    margin-top: -15px;
+}
+
+#contentArea {
+    transition: margin-left 0.5s;
+    margin-left: 100px;
+}
+
+.contentText {
+    padding: 100px 20px;
+    text-align: center;
+    margin-bottom: 0px;
+    margin-right: 180px;
+    margin-left: 80px;
+    margin-top: -140px;
+}
+
+    .contentText h2 {
+        border: none;
+        text-decoration: underline;
+        display: inline-block;
+        padding: 15px 10px;
+        text-transform: uppercase;
+        font-size: 24px;
+        color: #fff;
+    }
+
+    .contentText h3 {
+        text-transform: uppercase;
+        font-size: 18px;
+        margin: 0;
+        letter-spacing: 3px;
+    }
+    /*@media screen and (min-width: 768px) {
+	.contentText {
+		padding: 100px 180px;
+	}*/
+    .contentText h2 {
+        padding: 15px 65px;
+        font-size: 50px;
+    }
+
+    .contentText h3 {
+        font-size: 45px;
+    }
+
+i {
+    font-size: 25px;
+}
+
+} /*  bdo not remove these } */
+
+.timeIcon {
+    font-size: 165px;
+}
+
+} /*  bdo not remove these } */
+} /*  bdo not remove these } */
+
+
+body {
+    font-family: Arial;
+    font-size: 17px;
+    padding: 8px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.row {
+    display: -ms-flexbox; /* IE10 */
+    display: flex;
+    -ms-flex-wrap: wrap; /* IE10 */
+    flex-wrap: wrap;
+    margin: 0 -16px;
+}
+
+.col-25 {
+    -ms-flex: 25%; /* IE10 */
+    flex: 25%;
+}
+
+.col-50 {
+    -ms-flex: 500%; /* IE10 */
+    flex: 50%;
+}
+
+.col-75 {
+    -ms-flex: 70%; /* IE10 */
+    flex: 70%;
+}
+
+.col-25,
+.col-50,
+.col-75 {
+    padding: 0 16px;
+}
+
+.containermodal {
+    background-color: transparent; /* Makes the background color transparent */
+    display: none; /* Hides the element from displaying on the webpage */
+/*    background-color: display-none;*/
+    padding: 5px 20px 15px 20px;
+    border: 1px solid lightgrey;
+    border-radius: 3px;
+    width: 50%;
+    margin: auto;
+}
+
+input[type=text], input[type=number] {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 1.5px;
+}
+
+
+
+.icon-containermodal {
+    margin-bottom: 20px;
+    padding: 7px 0;
+    font-size: 24px;
+}
+
+.btn {
+    background-color: #6AABD2;
+    color: white;
+    padding: 12px;
+    margin: 10px 0;
+    border: none;
+    width: 100%;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 17px;
+}
+
+    .btn:hover {
+        background-color: #87B8D6;
+    }
+
+a {
+    color: #2196F3;
+}
+
+
+span.price {
+    float: right;
+    color: grey;
+}
+
+/* Responsive layout - when the screen is less than 800px wide, make the two columns stack on top of each other instead of next to each other (also change the direction - make the "cart" column go on top) */
+@media (max-width: 800px) {
+    .row {
+        flex-direction: column-reverse;
+    }
+
+    .col-25 {
+        margin-bottom: 20px;
+    }
+}
+
+
+body {
+    background-image: linear-gradient(#6dd5ed,#1c92d2);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-size: cover;
+}
+
+
+/* Style for the dialog */
+#myDialog, #myDialog2, #myDialog3, #myDialog4, #myDialog5, #myDialog6, #myDialog7, #myDialog8, #myDialog9 {
+    border: none;
+    background-color: White;
+    width: 350px; /* Set the width */
+    height: 400px; /* Set the height */
+}
+
+
+
+/* Form styling CSS */
+
+
+
+/* style.css */
+body {
+    margin: 0;
+    font-family: "Arial", sans-serif; /* 
+	background-image: url('hero-bg.jpg');
+background-repeat: no-repeat;
+  background-attachment: fixed;  
+  background-size: cover; */
+}
+
+
+#HideItem, #HideItem2, #HideItem3, #HideItem4, #HideItem5, #HideItem6, #HideItem7, #closeBtn {
+    display: none
+}
+
+#sidebar-close {
+    display: none;
+    color: #333;
+}
+
+.sideMenu {
+    height: 100%;
+    width: 100px;
+    position: fixed;
+    margin-left: 10px;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    background: none;
+    overflow-x: hidden;
+    transition: 0.2s;
+    padding-top: 40px;
+}
+
+.mainMenu h2 {
+    text-align: center;
+    letter-spacing: 7px;
+    color: #6AABD2;
+    border: solid 1px #f9f9f9;
+    padding: 10px 0;
+}
+
+.sideMenu a {
+    padding: 0px 0px 1px 32px;
+    text-decoration: none;
+    color: #fff;
+    display: block;
+    transition: 0.3s;
+    font-size: 18px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.mainMenu a:hover {
+    color: #fff;
+}
+
+.sideMenu .closeBtn {
+    position: absolute;
+    top: 0;
+    right: 25px;
+    font-size: 70px;
+    margin-left: 50px;
+    margin-top: -15px;
+}
+
+#contentArea {
+    transition: margin-left 0.5s;
+    margin-left: 100px;
+}
+
+
+.title_label {
+    margin-right: 100px; /* Adjust as needed */
+}
+
+.contentText {
+    padding: 100px 20px;
+    margin-bottom: 0px;
+    margin-right: 180px;
+    margin-left: 80px;
+    margin-top: -140px;
+}
+
+    .contentText h5 {
+        padding: 10px 10px;
+        text-transform: uppercase;
+        font-size: 24px;
+        color: #fff;
+    }
+
+    .contentText h3 {
+        text-transform: uppercase;
+        font-size: 18px;
+        margin: 0;
+        letter-spacing: 3px;
+    }
+    /*@media screen and (min-width: 768px) {
+	.contentText {
+		padding: 100px 180px;
+	}*/
+    .contentText h4 {
+        padding: 15px 65px;
+        font-size: 50px;
+    }
+
+    .contentText h3 {
+        font-size: 45px;
+    }
+
+i {
+    font-size: 25px;
+}
+
+}
+
+.timeIcon {
+    font-size: 165px;
+}
+
+}
+}
+
+
+
+
+
+
+.row {
+    display: -ms-flexbox; /* IE10 */
+    display: flex;
+    -ms-flex-wrap: wrap; /* IE10 */
+    flex-wrap: wrap;
+    margin: 0 -16px;
+}
+
+.col-25 {
+    -ms-flex: 25%; /* IE10 */
+    flex: 25%;
+}
+
+.col-50 {
+    -ms-flex: 500%; /* IE10 */
+    flex: 50%;
+}
+
+.col-75 {
+    -ms-flex: 70%; /* IE10 */
+    flex: 70%;
+}
+
+.col-25,
+.col-50,
+.col-75 {
+    padding: 0 16px;
+}
+
+.containermodal {
+    background-color: transparent; /* Makes the background color transparent */
+    display: none; /* Hides the element from displaying on the webpage */
+/*    background-color: display-none;
+*/    padding: 5px 20px 15px 20px;
+    border: 1px solid lightgrey;
+    border-radius: 3px;
+    width: 50%;
+    margin: auto;
+}
+
+input[type=text], input[type=number] {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 1.5px;
+}
+
+
+
+.icon-containermodal {
+    margin-bottom: 20px;
+    padding: 7px 0;
+    font-size: 24px;
+}
+
+.btn {
+    background-color: #6AABD2;
+    color: white;
+    padding: 12px;
+    margin: 10px 0;
+    border: none;
+    width: 100%;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 17px;
+}
+
+    .btn:hover {
+        background-color: #87B8D6;
+    }
+
+a {
+    color: #2196F3;
+}
+
+
+span.price {
+    float: right;
+    color: grey;
+}
+
+/* Responsive layout - when the screen is less than 800px wide, make the two columns stack on top of each other instead of next to each other (also change the direction - make the "cart" column go on top) */
+@media (max-width: 800px) {
+    .row {
+        flex-direction: column-reverse;
+    }
+
+    .col-25 {
+        margin-bottom: 20px;
+    }
+
+    #btnupdate {
+        background: none;
+    }
+}
+

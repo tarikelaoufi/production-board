@@ -1,0 +1,769 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <title>		Production BOARD	</title>
+</head>
+<style>
+    body {
+        background-image: linear-gradient(#6dd5ed,#1c92d2);
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        background-size: cover;
+    }
+
+    table, th, td {
+        border: 1px solid #dddddd; <!--
+        light grey border -->;
+        border-collapse: collapse;
+    }
+
+    /* Style for the dialog */
+    #myDialog {
+        border: none;
+    }
+</style>
+</head>
+
+
+<style>
+    /* center the table in the middle */
+    .center {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+
+    .dbox {
+        position: relative;
+        width: 85px;
+        height: 50px;
+    }
+        /* add diagonal line */
+        .dbox:after {
+            content: '';
+            display: block;
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            margin: auto;
+            z-index: -1;
+            background: linear-gradient(to top right, transparent calc(50% - 1px), #6AABD2, transparent calc(50% + 1px) );
+        }
+    /* align boxes with headings */
+    .dheading_tr,
+    .dheading_bl {
+        position: absolute;
+        /* or wider if needed/possible */
+        width: 65%;
+        height: 60%;
+        overflow: hidden;
+    }
+
+    .dheading_tr {
+        top: 0;
+        right: 0;
+        display: flex;
+        justify-content: flex-end;
+        align-items: flex-start;
+    }
+
+    .dheading_bl {
+        bottom: 0;
+        left: 0;
+        display: flex;
+        justify-content: flex-start;
+        align-items: flex-end;
+    }
+
+    .custom-row .dbox:after {
+        background: linear-gradient(to top right, transparent calc(50% - 1px), Red, transparent calc(50% + 1px));
+        background-color: #6AABD2;
+    }
+
+    .round { /* Style the timing */
+        border: 2px solid #6AABD2;
+        border-radius: 15px;
+        padding: 3px;
+        background: #6AABD2;
+        color: white;
+    }
+
+
+    /* Style the clickable div */
+    #reellbl1 {
+        text-align: right;
+        width: 100px;
+        height: 100px;
+        color: black;
+        background-color: none;
+        cursor: pointer; /* Change cursor to pointer on hover */
+    }
+
+    .th-color {
+        color: white;
+        background-color: #6AABD2;
+    }
+
+
+
+
+    /* Form styling CSS */
+    .dialog-container {
+        margin: 0px;
+        padding: 30px;
+        box-sizing: border-box;
+        font-family: 'Poppins', sans-serif;
+    }
+
+
+    /* Reset CSS */
+
+
+
+
+    /* Container styles */
+    .container {
+        max-width: 700px;
+        width: 100%;
+        background-color: #fff;
+        padding: 25px 30px;
+        border-radius: 5px;
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
+    }
+
+        /* Title styles */
+        .container .title {
+            font-size: 25px;
+            font-weight: 500;
+            position: relative;
+            color: #6AABD2;
+        }
+
+    /* Form content styles */
+    .content form .user-details {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        margin: 20px 0 12px 0;
+    }
+
+    /* Input box styles */
+    form .user-details .input-box {
+        margin-bottom: 15px;
+        width: calc(100% / 2 - 20px);
+    }
+
+    /* Label details styles */
+    form .input-box span.details {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 5px;
+    }
+
+    /* Common styles for input and select */
+    .user-details .input-box input, date,
+    .user-details .input-box select {
+        height: 45px;
+        width: 100%;
+        outline: none;
+        font-size: 16px;
+        border-radius: 5px;
+        padding-left: 10px;
+        border: 1px solid #ccc;
+        border-bottom-width: 2px;
+        transition: all 0.3s ease;
+    }
+
+        /* Input field focus styles */
+        .user-details .input-box input:focus,
+        .user-details .input-box input:valid,
+        .user-details .input-box select:focus {
+            border-color: #6AABD2; /* Change border color on focus */
+        }
+
+
+
+    /* Category styles */
+    form .category {
+        display: flex;
+        width: 60%;
+        margin: 14px 0;
+        justify-content: space-between;
+    }
+
+        /* Category label styles */
+        form .category label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+            /* Category dot styles */
+            form .category label .dot {
+                height: 18px;
+                width: 18px;
+                border-radius: 50%;
+                margin-right: 10px;
+                border: 5px solid transparent;
+                transition: all 0.3s ease;
+            }
+
+
+
+
+
+
+
+
+
+
+    /* Media queries for responsiveness */
+    @media (max-width: 584px) {
+        .container {
+            max-width: 100%;
+        }
+
+        form .user-details .input-box {
+            margin-bottom: 15px;
+            width: 100%;
+        }
+
+        form .category {
+            width: 100%;
+        }
+
+        .content form .user-details {
+            max-height: 300px;
+            overflow-y: scroll;
+        }
+
+        .user-details::-webkit-scrollbar {
+            width: 5px;
+        }
+    }
+
+    @media (max-width: 459px) {
+        .container .content .category {
+            flex-direction: column;
+        }
+    }
+</style>
+<style>
+    /* style.css */
+    body {
+        margin: 0;
+        font-family: "Arial", sans-serif;
+    }
+
+    #HideItem, #HideItem2, #HideItem3, #HideItem4, #HideItem5, #HideItem6, #HideItem7, #closeBtn {
+        display: none
+    }
+
+    #sideMenu {
+    }
+
+    .sideMenu {
+        height: 100%;
+        width: 100px;
+        position: fixed;
+        margin-left = 10px;
+        z-index: 1;
+        top: 0;
+        left: 0;
+        background: none;
+        overflow-x: hidden;
+        transition: 0.2s;
+        padding-top: 40px;
+    }
+
+    .mainMenu h2 {
+        text-align: center;
+        letter-spacing: 7px;
+        color: #6AABD2;
+        border: solid 1px #f9f9f9;
+        padding: 10px 0;
+    }
+
+    .sideMenu a {
+        padding: 8px 8px 8px 32px;
+        text-decoration: none;
+        color: #fff;
+        display: block;
+        transition: 0.3s;
+        font-size: 18px;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        font-weight: bold;
+    }
+
+    .mainMenu a:hover {
+        color: #fff;
+        border: solid 1px #f9f9f9;
+    }
+
+    .sideMenu .closeBtn {
+        position: absolute;
+        top: 0;
+        right: 25px;
+        font-size: 70px;
+        margin-left: 50px;
+        margin-top: -15px;
+    }
+
+    #contentArea {
+        transition: margin-left 0.5s;
+        margin-left: 100px;
+    }
+
+    .contentText {
+        padding: 100px 20px;
+        text-align: center;
+        margin-bottom: 0px;
+        margin-right: 180px;
+        margin-left: 80px;
+        margin-top: -140px;
+    }
+
+        .contentText h2 {
+            border: solid 1px #f9f9f9;
+            display: inline-block;
+            padding: 15px 10px;
+            text-transform: uppercase;
+            font-size: 24px;
+            color: #fff;
+        }
+
+        .contentText h3 {
+            text-transform: uppercase;
+            font-size: 18px;
+            margin: 0;
+            letter-spacing: 3px;
+        }
+        /*@media screen and (min-width: 768px) {
+    .contentText {
+        padding: 100px 180px;
+    }*/
+        .contentText h2 {
+            padding: 15px 65px;
+            font-size: 50px;
+        }
+
+        .contentText h3 {
+            font-size: 45px;
+        }
+
+    i {
+        font-size: 25px;
+    }
+
+    }
+
+    .timeIcon {
+        font-size: 165px;
+    }
+
+    }
+
+    .changeTheme {
+        background: #1D1E22;
+        color: #eee;
+    }
+</style>
+<body>
+
+
+
+    <div id="sideMenu" class="sideMenu">
+
+        <Tooltip title="Menu" arrow>
+            <span style="  color: white; cursor: pointer;  margin-top:  0px;"
+                  onclick="openNav()"><i style="font-size: 40px; margin-top:  -120px;  margin-left:  30px;" class="fa-solid fa-bars"></i></span>
+        </Tooltip>
+        <h2>&nbsp;</h2>
+        <h2>&nbsp;</h2>
+
+        <div class="mainMenu" onclick="openNav()">
+
+
+            <a href="TABLE.html"
+               onclick="showContent('Production Board')"><i class="fa-solid fa-marker">  &nbsp;</i><div id="HideItem">Production Board</div> </a>
+            <a href="SYNTHESE.html"
+               onclick="showContent('WEEKLY Synthese</')">  <i class="fa-solid fa-calendar-week"> &nbsp; </i><div id="HideItem2">WEEKLY Synthese </div></a>
+            <a href="javascript:void(0)"
+               onclick="showContent('Portfolio')"> <i class="fa-solid fa-upload"> &nbsp;</i><div id="HideItem3">Find a board</div></a>
+            <a href="javascript:void(0)"
+               onclick="showContent('Services')"> <i class="fa-solid fa-screwdriver-wrench"> &nbsp;</i><div id="HideItem4">Services</div></a>
+            <a href="javascript:void(0)"
+               onclick="showContent('Contact')"> <i class="fa-solid fa-language"> </i>&nbsp;</i><div id="HideItem5">Language</div></a>
+            <a onclick="myFunction()"> <i ID="darkmode" class="fa-solid fa-circle-half-stroke">&nbsp;</i><div id="HideItem6">Dark/LIGHT mode</div></a>
+            <a href="javascript:void(0)"
+               onclick="showContent('Contact')"> <i class="fa-solid fa-rotate">&nbsp;</i> <div id="HideItem7">REFRECH</div></a>
+        </div>
+    </div>
+
+    <div id="contentArea">
+
+        <Tooltip title="Menu" arrow>
+            <span style="cursor: pointer; position: fixed; margin-top:  153px;"
+                  class="closeBtn" id="closeBtn" onclick="closeNav()"><i class="fa-solid fa-xmark" style="font-size: 47px; color: #ffffff;"></i></span>
+        </Tooltip>
+
+
+
+
+
+
+        <div class="contentAreaCloseNav" onclick="closeNav()">
+            <div class="contentText">
+                <h2 style="text-align:center;">Production Board</h2>
+
+                <table style="width:90%; margin-top:  -35px;  ">
+                    <tr>
+                        <th style="width:0%; background-color: none;color:white">
+                            <div class="timeIcon">
+                                <i class="fa-solid fa-clock-rotate-left" alt="3Shifts" class="center"></i>
+                            </div>
+                        </th>
+
+                        <th class="custom-row" style="width:0%;background-color: #6AABD2; text-align: center; background: linear-gradient(to top right, transparent calc(50% - 1px), White, transparent calc(50% + 1px)); background-color: #6AABD2;">
+                            <div class="dbox">
+                                <div class="dheading_tr" style="color:white">Objet</div>
+                                <div class="dheading_bl" style="color:white">Cumul</div>
+                            </div>
+                        </th>
+
+                        <th class="custom-row" style="width:0%;background-color: #6AABD2; text-align: center; background: linear-gradient(to top right, transparent calc(50% - 1px), White, transparent calc(50% + 1px)); background-color: #6AABD2;">
+                            <div class="dbox">
+                                <div class="dheading_tr" style="color:white">Reel</div>
+                                <div class="dheading_bl" style="color:white">Cumul</div>
+                            </div>
+                        </th>
+                        <th class="custom-row" style="width:0%;background-color: #6AABD2; text-align: center; background: linear-gradient(to top right, transparent calc(50% - 1px), White, transparent calc(50% + 1px)); background-color: #6AABD2;">
+
+                            <div class="dbox">
+
+                                <div class="dheading_tr" style="color:white">Rebut</div>
+                                <div class="dheading_bl" style="color:white">Cumul</div>
+                            </div>
+                        </th>
+                        <th style="width:100%; height:50px;;background-color: #6AABD2;color:white">Commentaires</th>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            <div class="round">
+                                07:00
+                            </div>
+                        </td>
+
+
+                        <td style="width:0%">
+                            <div class="dbox">
+                                <div class="dheading_tr">55</div>
+                                <div class="dheading_bl">55</div>
+                            </div>
+                        </td>
+
+                        <td style="width:0%">
+                            <div class="dbox">
+
+
+                                <div class="dheading_tr"><label id="reellbl1" for="openDialog"></label> </div>
+                                <div class="dheading_bl"><label id="cumullbl1"> 00 </label></div>
+                            </div>
+                        </td>
+
+                        <td style="width:0%">
+                            <div class="dbox">
+                                <div class="dheading_tr"><label id="rubutlbl1" for="openDialog">00</label> </div>
+                                <div class="dheading_bl"><label id="cumulrubut1"> 00 </label></div>
+                            </div>
+                        </td>
+
+
+                        <td id="Commentaire1" for="openDialog">Commentaire de 1er heure.</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="round">
+                                08:00
+                            </div>
+                        </td>
+
+                        <td style="width:0%">
+                            <div class="dbox">
+                                <div class="dheading_tr">60</div>
+                                <div class="dheading_bl">115</div>
+                            </div>
+                        </td>
+
+                        <td style="width:0%">
+                            <div class="dbox">
+                                <div class="dheading_tr"><label id="reellbl2" for="openDialog2"> 00 </label> </div>
+                                <div class="dheading_bl"><label id="cumullbl2"> 00 </label></div>
+                            </div>
+                        </td>
+
+                        <td style="width:0%">
+                            <div class="dbox">
+                                <div class="dheading_tr">rubut2</div>
+                                <div class="dheading_bl">cumul2</div>
+                            </div>
+                        </td>
+
+                        <td>Commentaire de 2eme heure.</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="round">
+                                09:00
+                            </div>
+                        </td>
+
+
+                        <td style="width:0%">
+                            <div class="dbox">
+                                <div class="dheading_tr">60</div>
+                                <div class="dheading_bl">175</div>
+                            </div>
+                        </td>
+
+
+                        <td style="width:0%">
+                            <div class="dbox">
+                                <div class="dheading_tr"><label id="reellbl3" for="openDialog3">00</label> </div>
+                                <div class="dheading_bl"><label id="cumullbl3">00</label></div>
+                            </div>
+                        </td>
+
+
+                        <td style="width:0%">
+                            <div class="dbox">
+                                <div class="dheading_tr">rubut3</div>
+                                <div class="dheading_bl">cumul3</div>
+                            </div>
+                        </td>
+
+
+                        <td>Commentaire de 3eme heure.</td>
+                    </tr>
+
+
+                    <tr>
+                        <td>
+                            <div class="round">
+                                10:00
+                            </div>
+                        </td>
+                        <td style="width:0%">
+                            <div class="dbox">
+                                <div class="dheading_tr">40</div>
+                                <div class="dheading_bl">215</div>
+                            </div>
+                        </td>
+
+
+                        <td style="width:0%">
+                            <div class="dbox">
+                                <div class="dheading_tr">reel 4</div>
+                                <div class="dheading_bl">cumul 4</div>
+                            </div>
+                        </td>
+
+                        <td style="width:0%">
+                            <div class="dbox">
+                                <div class="dheading_tr">rebut 4</div>
+                                <div class="dheading_bl">cumul 4</div>
+                            </div>
+                        </td>
+
+                        <td>Commentaire de 4eme heure.</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="round">
+                                11:00
+                            </div>
+                        </td>
+
+                        <td style="width:0%">
+                            <div class="dbox">
+                                <div class="dheading_tr">60</div>
+                                <div class="dheading_bl">275</div>
+                            </div>
+                        </td>
+
+                        <td style="width:0%">
+                            <div class="dbox">
+                                <div class="dheading_tr">objet 5</div>
+                                <div class="dheading_bl">cumul 5</div>
+                            </div>
+                        </td>
+
+                        <td style="width:0%">
+                            <div class="dbox">
+                                <div class="dheading_tr">rubut 5</div>
+                                <div class="dheading_bl">cumul 5</div>
+                            </div>
+                        </td>
+
+                        <td>Commentaire de 5eme heure.</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="round">
+                                12:00
+                            </div>
+                        </td>
+                        <td style="width:0%">
+                            <div class="dbox">
+                                <div class="dheading_tr">60</div>
+                                <div class="dheading_bl">335</div>
+                            </div>
+                        </td>
+
+                        <td style="width:0%">
+                            <div class="dbox">
+                                <div class="dheading_tr">objet 6</div>
+                                <div class="dheading_bl">cumul 6</div>
+                            </div>
+                        </td>
+
+                        <td style="width:0%">
+                            <div class="dbox">
+                                <div class="dheading_tr">rubut 6</div>
+                                <div class="dheading_bl">cumul 6</div>
+                            </div>
+                        </td>
+
+                        <td>Commentaire de 6eme heure.</td>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            <div class="round">
+                                13:00
+                            </div>
+                        </td>
+                        <td style="width:0%">
+                            <div class="dbox">
+                                <div class="dheading_tr">60</div>
+                                <div class="dheading_bl">395</div>
+                            </div>
+                        </td>
+
+                        <td style="width:0%">
+                            <div class="dbox">
+                                <div class="dheading_tr">objet 7</div>
+                                <div class="dheading_bl">cumul</div>
+                            </div>
+                        </td>
+
+                        <td style="width:0%">
+                            <div class="dbox">
+                                <div class="dheading_tr">rubut 7</div>
+                                <div class="dheading_bl">cumul 7</div>
+                            </div>
+                        </td>
+
+                        <td>Commentaire de 7eme heure.</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="round">
+                                14:00
+                            </div>
+                        </td>
+                        <td style="width:0%">
+                            <div class="dbox">
+                                <div class="dheading_tr">50</div>
+                                <div class="dheading_bl">445</div>
+                            </div>
+                        </td>
+
+                        <td style="width:0%">
+                            <div class="dbox">
+                                <div class="dheading_tr">objet 8</div>
+                                <div class="dheading_bl">cumul 8</div>
+                            </div>
+                        </td>
+
+                        <td style="width:0%">
+                            <div class="dbox">
+                                <div class="dheading_tr">rubut 8</div>
+                                <div class="dheading_bl">cumul 8</div>
+                            </div>
+                        </td>
+
+                        <td>Commentaire de 8eme heure.</td>
+                    </tr>
+                </table>
+
+
+                <script>
+function ChangeMode() {
+   var element = document.body;
+   element.classList.toggle("dark-mode");
+}
+                </script>
+                <div id="popupContainer" style="display: none;">
+                    <!-- Popup content -->
+                    <label id="popupLabel">Original Label Value</label>
+                    <button onclick="changeLabel()">Change Label</button>
+                    <button onclick="closePopup()">Close</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <script>
+    function openNav() {
+	document.getElementById("sideMenu")
+		.style.width = "300px";
+	document.getElementById("contentArea")
+		.style.marginLeft = "300px";
+		document.getElementById("HideItem").style.display = 'unset ';
+		document.getElementById("HideItem2").style.display = 'unset ';
+		document.getElementById("HideItem3").style.display = 'unset';
+		document.getElementById("HideItem4").style.display = 'unset';
+		document.getElementById("HideItem5").style.display = 'unset';
+		document.getElementById("HideItem6").style.display = 'unset';
+		document.getElementById("HideItem7").style.display = 'unset';
+		document.getElementById("closeBtn").style.display = 'unset';
+
+}
+
+function closeNav() {
+	document.getElementById("sideMenu").style.width = "100px";
+	document.getElementById("contentArea").style.marginLeft = "100px";
+	document.getElementById("HideItem").style.display = 'none';
+	document.getElementById("HideItem2").style.display = 'none';
+	document.getElementById("HideItem3").style.display = 'none';
+	document.getElementById("HideItem4").style.display = 'none';
+	document.getElementById("HideItem5").style.display = 'none';
+	document.getElementById("HideItem6").style.display = 'none';
+	document.getElementById("HideItem7").style.display = 'none';
+	document.getElementById("closeBtn").style.display = 'none';
+}
+
+function showContent(content) {
+	document.getElementById("contentTitle")
+		.textContent = content + " page";
+
+
+
+	closeNav();
+}
+
+
+    </script>
+</body>
+
+</html>

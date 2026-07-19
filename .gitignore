@@ -1,0 +1,44 @@
+﻿# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+
+# NuGet
+packages/
+*.nupkg
+.nuget/
+
+# ASP.NET temporary files
+Temporary ASP.NET Files/
+App_Data/*.mdf
+App_Data/*.ldf
+
+# SQL Server database files
+*.mdf
+*.ldf
+
+# Logs
+*.log
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+
+# Publish output
+publish/
+Published/
