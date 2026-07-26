@@ -1,15 +1,14 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 18
-VisualStudioVersion = 18.8.12009.203
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PFF", "PFF.csproj", "{1ED444A8-9D12-44E5-8563-0FE31D85E591}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProductionBoard.Core", "..\ProductionBoard.Core\ProductionBoard.Core.csproj", "{E83479AC-5F1E-48AF-BDB5-683173956552}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProductionBoard.Core", "ProductionBoard.Core\ProductionBoard.Core.csproj", "{E83479AC-5F1E-48AF-BDB5-683173956552}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProductionBoard.Data", "..\ProductionBoard.Data\ProductionBoard.Data.csproj", "{DE2D4858-6875-495B-A7B0-641DA4B1D7B1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProductionBoard.Data", "ProductionBoard.Data\ProductionBoard.Data.csproj", "{DE2D4858-6875-495B-A7B0-641DA4B1D7B1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProductionBoard.Tests", "..\ProductionBoard.Tests\ProductionBoard.Tests.csproj", "{AB278E10-70A8-4374-8E7A-68D5DC54B604}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProductionBoard.Tests", "ProductionBoard.Tests\ProductionBoard.Tests.csproj", "{AB278E10-70A8-4374-8E7A-68D5DC54B604}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -36,8 +35,5 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {67CE3834-8421-4ED7-9194-6A38FB097650}
 	EndGlobalSection
 EndGlobal

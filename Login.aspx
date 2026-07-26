@@ -1,222 +1,281 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="Login.aspx.cs" Inherits="PFF.Login" %>
+﻿<%@ Page Language="C#"
+    AutoEventWireup="true"
+    CodeBehind="Login.aspx.cs"
+    Inherits="PFF.Login" %>
 
 <!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-<style>
-body {
-  font-family: Arial;
-  font-size: 17px;
-  padding: 8px;
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <meta charset="utf-8" />
 
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1" />
 
-}
+    <title>Production Board - Login</title>
 
-* {
-  box-sizing: border-box;
-}
+    <style type="text/css">
+        * {
+            box-sizing: border-box;
+        }
 
-.row {
-  display: -ms-flexbox; /* IE10 */
-  display: flex;
-  -ms-flex-wrap: wrap; /* IE10 */
-  flex-wrap: wrap;
-  margin: 0 -16px;
-}
+        html,
+        body {
+            min-height: 100%;
+            margin: 0;
+        }
 
-.col-25https://accounts.google.com/b/0/AddMailService {
-  -ms-flex: 25%; /* IE10 */
-  flex: 25%;
-}
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #172b4d;
+            background:
+                radial-gradient(
+                    circle at top left,
+                    rgba(255, 255, 255, 0.35),
+                    transparent 38%
+                ),
+                linear-gradient(
+                    145deg,
+                    #6aabd2,
+                    #278bc4
+                );
+        }
 
-.col-50 {
-  -ms-flex: 50%; /* IE10 */
-  flex: 50%;
-}
+        .login-wrapper {
+            width: 100%;
+            max-width: 430px;
+        }
 
-.col-75 {
-  -ms-flex: 75%; /* IE10 */
-  flex: 75%;
-}
+        .brand {
+            margin-bottom: 24px;
+            text-align: center;
+            color: #ffffff;
+        }
 
-.col-25,
-.col-50,
-.col-75 {
-  padding: 0 16px;
-}
+        .brand-mark {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 68px;
+            height: 68px;
+            margin: 0 auto 14px;
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.18);
+            font-size: 30px;
+            font-weight: bold;
+        }
 
-.container {
-  background-color: #f2f2f2;
-  padding: 5px 20px 15px 20px;
-  border: 1px solid lightgrey;
-  border-radius: 3px;
-   background-color: #f2f2f2;
-  padding: 5px 20px 15px 20px;
-  border: 1px solid lightgrey;
-  border-radius: 3px;
-  width: 50%; /* Adjust the width as needed */
-  margin: auto; /* Center the container horizontally */
-    
-  
-}
+        .brand h1 {
+            margin: 0;
+            font-size: 28px;
+        }
 
-input[type=text],input[type=date],select {
-  width: 100%;
-  margin-bottom: 20px;
-  padding: 12px;
-  border: 1px solid #ccc;
-  border-radius: 3px;
-}
+        .brand p {
+            margin: 8px 0 0;
+            color: rgba(255, 255, 255, 0.86);
+            font-size: 14px;
+        }
 
-label {
-  margin-bottom: 10px;
-  display: block;
-  COLOR: #6AABD2;
-}
+        .login-card {
+            padding: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.75);
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.96);
+            box-shadow: 0 24px 65px rgba(22, 72, 102, 0.28);
+        }
 
-.icon-container {
-  margin-bottom: 20px;
-  padding: 7px 0;
-  font-size: 24px;
-}
+        .login-card h2 {
+            margin: 0;
+            color: #173b53;
+            font-size: 24px;
+        }
 
-.btn {
-  background-color: #6AABD2;
-  color: white;
-  padding: 12px;
-  margin: 10px 0;
-  border: none;
-  width: 100%;
-  border-radius: 3px;
-  cursor: pointer;
-  font-size: 17px;
-}
+        .subtitle {
+            margin: 8px 0 25px;
+            color: #667085;
+            font-size: 14px;
+            line-height: 1.5;
+        }
 
-.btn:hover {
-  background-color: #87B8D6;
-}
+        .field {
+            margin-bottom: 19px;
+        }
 
-}
+        .field label {
+            display: block;
+            margin-bottom: 8px;
+            color: #344054;
+            font-size: 14px;
+            font-weight: bold;
+        }
 
+        .form-input {
+            width: 100%;
+            height: 48px;
+            padding: 0 14px;
+            border: 1px solid #d0d5dd;
+            border-radius: 11px;
+            outline: none;
+            color: #101828;
+            background: #ffffff;
+            font-size: 15px;
+        }
 
-a {
-  color: #2196F3;
-}
+        .form-input:focus {
+            border-color: #4599c8;
+            box-shadow: 0 0 0 4px rgba(69, 153, 200, 0.15);
+        }
 
-hr {
-  border: 1px solid lightgrey;
-}
+        .remember-row {
+            margin: 2px 0 21px;
+            color: #475467;
+            font-size: 14px;
+        }
 
-span.price {
-  float: right;
-  color: grey;
-}
+        .remember-row input {
+            width: 16px;
+            height: 16px;
+            margin-right: 7px;
+            vertical-align: middle;
+        }
 
+        .login-button {
+            width: 100%;
+            min-height: 48px;
+            border: 0;
+            border-radius: 11px;
+            cursor: pointer;
+            color: #ffffff;
+            background: linear-gradient(
+                135deg,
+                #6aabd2,
+                #278bc4
+            );
+            font-size: 15px;
+            font-weight: bold;
+            box-shadow: 0 12px 24px rgba(39, 139, 196, 0.25);
+        }
 
-@media (max-width: 800px) {
-  .row {
-    flex-direction: column-reverse;
-  }
-  .col-25 {
-    margin-bottom: 20px;
-  }
-}
-</style>
+        .login-button:hover {
+            background: linear-gradient(
+                135deg,
+                #5f9fc6,
+                #197eb8
+            );
+        }
+
+        .error-message {
+            display: block;
+            margin-bottom: 20px;
+            padding: 12px 14px;
+            border: 1px solid #fecdca;
+            border-radius: 10px;
+            color: #b42318;
+            background: #fef3f2;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        .security-note {
+            margin-top: 22px;
+            padding-top: 18px;
+            border-top: 1px solid #eaecf0;
+            color: #667085;
+            font-size: 12px;
+            line-height: 1.55;
+            text-align: center;
+        }
+
+        @media (max-width: 520px) {
+            body {
+                padding: 16px;
+            }
+
+            .login-card {
+                padding: 25px 20px;
+            }
+        }
+    </style>
 </head>
+
 <body>
-    <nav>
-<div >
-<a href="Login.aspx">En</a> -
-<a href="LoginFr.aspx">Fr</a>
-</div>
-</nav>
+    <form id="form1" runat="server">
+        <main class="login-wrapper">
+            <header class="brand">
+                <div class="brand-mark">PB</div>
 
-<h2 style="color:#6AABD2;"><center>Sign up to Production Board</center></h2>
+                <h1>Production Board</h1>
 
-<div class="row">
-  <div class="col-75">
-    <div class="container">
-      <form runat="server">
-      
-        <div class="row">
-          <div class="col-50">
-            <br>
-            <label for="teams"><i class="fa-solid fa-people-group"></i> Select your Team</label>
-              <asp:DropDownList ID="DropDownListTeams" AppendDataBoundItems="true" runat="server">
-     <asp:ListItem Text="Team A" Value="TeamA" />
-     <asp:ListItem Text="Team B" Value="TeamB" />
-     <asp:ListItem Text="Team C" Value="TeamC" />
-</asp:DropDownList>
+                <p>Private company production platform</p>
+            </header>
 
+            <section class="login-card">
+                <h2>Sign in</h2>
 
+                <p class="subtitle">
+                    Use the account provided by the platform administrator.
+                </p>
 
+                <asp:Label
+                    ID="ErrorMessageLabel"
+                    runat="server"
+                    CssClass="error-message"
+                    Visible="false" />
 
+                <div class="field">
+                    <label for="UsernameTextBox">
+                        Username
+                    </label>
 
-      
-            <label for="shifts"><i class="fa-solid fa-traffic-light"></i> Select your Shift</label>
-                   <asp:DropDownList ID="DropDownListShift" AppendDataBoundItems="true" runat="server">
-     <asp:ListItem Text="Morning" Value="morning" />
-     <asp:ListItem Text="Night" Value="night" />
-     <asp:ListItem Text="Afternoon" Value="afternoon" />
-</asp:DropDownList>
-  
-   
-              <div class="row">
-              <div class="col-50">
-           <label for="pl"><i class="fa-solid fa-box-open"></i> Select Product</label>
-                     <asp:DropDownList ID="DropDownListProducts" AppendDataBoundItems="true" runat="server">
-     <asp:ListItem Text="Product 1" Value="Product1" />
-     <asp:ListItem Text="Product 2" Value="Product2" />
-     <asp:ListItem Text="Product 3" Value="Product3" />
-</asp:DropDownList>
-				
-              </div>
-			  </div> 
-              
-            
-            <div class="row">
-              <div class="col-50">
-                
-              </div>
-              <div class="col-50">
-                
-              </div>
-            </div>
-          </div>
+                    <asp:TextBox
+                        ID="UsernameTextBox"
+                        runat="server"
+                        CssClass="form-input"
+                        MaxLength="80"
+                        autocomplete="username"
+                        placeholder="Enter your username" />
+                </div>
 
-          <div class="col-50">
-            <h3></h3>
-               <label for="pl"><i class="fa-brands fa-font-awesome"></i> Select your Production Line</label>
-                     <asp:DropDownList ID="DropDownListPL" AppendDataBoundItems="true" runat="server">
-     <asp:ListItem Text="Production Line 1" Value="pl1" />
-     <asp:ListItem Text="Production Line 2" Value="pl2" />
-     <asp:ListItem Text="Production Line 3" Value="pl3" />
-</asp:DropDownList>
-               <label for="date"><i class="fa-solid fa-calendar"></i> Ajust Date</label>
-                <input type="date" runat="server" id="todayDate" name="sel_date"  />
+                <div class="field">
+                    <label for="PasswordTextBox">
+                        Password
+                    </label>
 
-                               <label for="verifyid"><i class="fa-solid fa-user-check"></i> Verify ID</label>
-              <asp:TextBox ID="verifyid" runat="server" placeholder="50001234"></asp:TextBox>
+                    <asp:TextBox
+                        ID="PasswordTextBox"
+                        runat="server"
+                        CssClass="form-input"
+                        TextMode="Password"
+                        MaxLength="200"
+                        autocomplete="current-password"
+                        placeholder="Enter your password" />
+                </div>
 
+                <div class="remember-row">
+                    <asp:CheckBox
+                        ID="RememberMeCheckBox"
+                        runat="server"
+                        Text="Keep me signed in" />
+                </div>
 
- <script>
-     document.getElementById("todayDate").valueAsDate = new Date();
- </script>
+                <asp:Button
+                    ID="LoginButton"
+                    runat="server"
+                    Text="Sign in"
+                    CssClass="login-button"
+                    OnClick="LoginButton_Click" />
 
-           
-           </div>
-  </div>
-
-         <asp:Button ID="Button1" runat="server" Text="Continue to Production BOARD" type="submit"  class="btn" OnClick="Button1_Click" />
-    
-
-      </form>
-   
-  </div>
-
-
+                <div class="security-note">
+                    Access is limited to authorized company employees.
+                    Login attempts and production changes may be audited.
+                </div>
+            </section>
+        </main>
+    </form>
 </body>
 </html>
-
