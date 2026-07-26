@@ -30,6 +30,29 @@ namespace PFF
         private const string CurrentBoardIdViewStateKey =
             "CurrentProductionBoardId";
 
+        /*
+         * Standard target plan used by every product and every shift:
+         * H1 = 55  -> 5-minute planned meeting
+         * H2 = 60
+         * H3 = 60
+         * H4 = 60
+         * H5 = 40  -> planned break
+         * H6 = 60
+         * H7 = 60
+         * H8 = 50  -> 10-minute workstation organization
+         */
+        private static readonly int[] StandardHourlyTargets =
+        {
+            55,
+            60,
+            60,
+            60,
+            40,
+            60,
+            60,
+            50
+        };
+
         protected void Page_Load(
             object sender,
             EventArgs e)
@@ -603,8 +626,103 @@ namespace PFF
                 HttpUtility.HtmlEncode(
                     board.ProductName);
 
+            /*
+             * Enforce the same hourly target distribution for every
+             * product and every shift before the values are displayed.
+             *
+             * This moves the planned-break target from H4 to H5:
+             * H4 = 60 and H5 = 40.
+             */
+            ApplyStandardHourlyTargetPlan(
+                board.Hours);
+
             BindBoardHours(
                 board.Hours);
+        }
+
+        private static void ApplyStandardHourlyTargetPlan(
+            IList<HourModel> hours)
+        {
+            if (hours == null)
+            {
+                return;
+            }
+
+            IDictionary<int, HourModel> hoursByNumber =
+                hours
+                    .Where(hour => hour != null)
+                    .GroupBy(hour => hour.HourNumber)
+                    .ToDictionary(
+                        group => group.Key,
+                        group => group.First());
+
+            int targetCumulative = 0;
+
+            for (int hourNumber = 1;
+                 hourNumber <= StandardHourlyTargets.Length;
+                 hourNumber++)
+            {
+                int targetQuantity =
+                    StandardHourlyTargets[
+                        hourNumber - 1];
+
+                targetCumulative +=
+                    targetQuantity;
+
+                HourModel hour;
+
+                if (!hoursByNumber.TryGetValue(
+                        hourNumber,
+                        out hour))
+                {
+                    continue;
+                }
+
+                hour.TargetQuantity =
+                    targetQuantity;
+
+                hour.TargetCumulative =
+                    targetCumulative;
+            }
+        }
+
+        private static int GetStandardHourlyTarget(
+            int hourNumber)
+        {
+            if (hourNumber < 1 ||
+                hourNumber > StandardHourlyTargets.Length)
+            {
+                return 0;
+            }
+
+            return StandardHourlyTargets[
+                hourNumber - 1];
+        }
+
+        private static int GetStandardTargetCumulative(
+            int hourNumber)
+        {
+            if (hourNumber < 1)
+            {
+                return 0;
+            }
+
+            int lastIndex =
+                Math.Min(
+                    hourNumber,
+                    StandardHourlyTargets.Length);
+
+            int cumulative = 0;
+
+            for (int index = 0;
+                 index < lastIndex;
+                 index++)
+            {
+                cumulative +=
+                    StandardHourlyTargets[index];
+            }
+
+            return cumulative;
         }
 
         private void BindBoardHours(
@@ -701,11 +819,17 @@ namespace PFF
                     hourNumber.ToString(
                         CultureInfo.InvariantCulture),
 
-                TargetQuantity = 0,
+                TargetQuantity =
+                    GetStandardHourlyTarget(
+                        hourNumber),
+
                 ActualQuantity = 0,
                 ScrapQuantity = 0,
 
-                TargetCumulative = 0,
+                TargetCumulative =
+                    GetStandardTargetCumulative(
+                        hourNumber),
+
                 ActualCumulative = 0,
                 ScrapCumulative = 0,
 
@@ -747,6 +871,12 @@ namespace PFF
                             hourLabel =
                                 hour.HourLabel ??
                                 string.Empty,
+
+                            targetQuantity =
+                                hour.TargetQuantity,
+
+                            targetCumulative =
+                                hour.TargetCumulative,
 
                             actualQuantity =
                                 hour.ActualQuantity,
