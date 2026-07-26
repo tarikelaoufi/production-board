@@ -1,43 +1,143 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Web;
+using System.Web.Security;
 using System.Web.UI;
-using System.Web.UI.HtmlControls;
-using System.Web.UI.WebControls;
+
+using global::ProductionBoard.Core.DTOs;
+using global::ProductionBoard.Core.Services;
+using global::ProductionBoard.Data;
+using global::ProductionBoard.Data.Repositories;
 
 namespace PFF
 {
-    public partial class Login : System.Web.UI.Page
+    public partial class Login : Page
     {
-        protected void Page_Load(object sender, EventArgs e)
+        protected void Page_Load(
+            object sender,
+            EventArgs e)
         {
+            if (IsPostBack)
+            {
+                return;
+            }
+
+            ErrorMessageLabel.Visible = false;
+
+            if (Request.IsAuthenticated)
+            {
+                RedirectSafely(
+                    "BoardSetup.aspx");
+            }
         }
 
-        protected void Button1_Click(object sender, EventArgs e)
+        protected void LoginButton_Click(
+            object sender,
+            EventArgs e)
         {
-            Session["value1"] = DropDownListTeams.Items[DropDownListTeams.SelectedIndex].Text;
-            Session["value2"] = DropDownListShift.Items[DropDownListShift.SelectedIndex].Text;
-            Session["value3"] = DropDownListPL.Items[DropDownListPL.SelectedIndex].Text;
-            Session["value4"] = todayDate.Value;
-            Session["value5"] = DropDownListProducts.Items[DropDownListPL.SelectedIndex].Text;
-            if (DropDownListTeams.Items[DropDownListTeams.SelectedIndex].Text == "Team A" && verifyid.Text == "1111")
+            ErrorMessageLabel.Visible = false;
+
+            try
             {
-                Response.Redirect("PB_page.aspx");
+                AuthenticationService authenticationService =
+                    CreateAuthenticationService();
 
+                AuthenticationResult result =
+                    authenticationService.Authenticate(
+                        UsernameTextBox.Text,
+                        PasswordTextBox.Text,
+                        DateTime.UtcNow);
+
+                if (!result.Succeeded)
+                {
+                    ShowError(
+                        result.ErrorMessage);
+
+                    PasswordTextBox.Text =
+                        string.Empty;
+
+                    return;
+                }
+
+                Session.Clear();
+
+                Session["CurrentUserId"] =
+                    result.User.Id;
+
+                Session["CurrentUsername"] =
+                    result.User.Username;
+
+                Session["CurrentFullName"] =
+                    result.User.FullName;
+
+                Session["CurrentUserRole"] =
+                    result.User.Role;
+
+                Session["MustChangePassword"] =
+                    result.User.MustChangePassword;
+
+                if (result.Assignment != null)
+                {
+                    Session["CurrentAssignmentId"] =
+                        result.Assignment.Id;
+
+                    Session["CurrentTeamName"] =
+                        result.Assignment.TeamName;
+
+                    Session["CurrentShiftName"] =
+                        result.Assignment.ShiftName;
+                }
+
+                FormsAuthentication.SetAuthCookie(
+                    result.User.Username,
+                    RememberMeCheckBox.Checked);
+
+                RedirectSafely(
+                    "BoardSetup.aspx");
             }
-
-            else if (DropDownListTeams.Items[DropDownListTeams.SelectedIndex].Text == "Team B" && verifyid.Text == "2222")
+            catch (Exception)
             {
-                Response.Redirect("PB_page.aspx");
-
+                ShowError(
+                    "Login is temporarily unavailable. Check the database connection and try again.");
             }
-            else if (DropDownListTeams.Items[DropDownListTeams.SelectedIndex].Text == "Team C" && verifyid.Text == "3333")
-            {
-                Response.Redirect("PB_page.aspx");
+        }
 
-            }
-            else { Response.Write("wrong Team and/or ID, Please check again."); }
+        private static AuthenticationService
+            CreateAuthenticationService()
+        {
+            ConnectionFactory connectionFactory =
+                new ConnectionFactory();
+
+            UserRepository userRepository =
+                new UserRepository(
+                    connectionFactory);
+
+            PasswordHasher passwordHasher =
+                new PasswordHasher();
+
+            return new AuthenticationService(
+                userRepository,
+                passwordHasher);
+        }
+
+        private void ShowError(string message)
+        {
+            ErrorMessageLabel.Text =
+                HttpUtility.HtmlEncode(
+                    string.IsNullOrWhiteSpace(message)
+                        ? "Authentication failed."
+                        : message);
+
+            ErrorMessageLabel.Visible = true;
+        }
+
+        private void RedirectSafely(string url)
+        {
+            Response.Redirect(
+                url,
+                false);
+
+            Context.ApplicationInstance
+                .CompleteRequest();
         }
     }
 }

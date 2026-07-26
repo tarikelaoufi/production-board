@@ -1,4 +1,4 @@
-﻿# Visual Studio
+# Visual Studio
 .vs/
 *.user
 *.suo
@@ -12,33 +12,45 @@
 [Rr]elease/
 x64/
 x86/
-
 # NuGet
 packages/
 *.nupkg
 .nuget/
-
 # ASP.NET temporary files
 Temporary ASP.NET Files/
 App_Data/*.mdf
 App_Data/*.ldf
-
 # SQL Server database files
 *.mdf
 *.ldf
-
 # Logs
 *.log
-
 # OS files
 Thumbs.db
 Desktop.ini
 .DS_Store
-
 # IDE
 .idea/
 .vscode/
-
 # Publish output
 publish/
 Published/
+**/bin/
+**/obj/
+TestResults/
+# Local repair backups
+.solution-backup/
+.test-project-backup/
+.repair-backup/
+# Sensitive local database scripts
+db users.sql
+# Local repair scripts
+Rebuild-PFF-Solution.ps1
+Repair-ProductionBoardTests.ps1
+# Local backup files
+*.bak
+# Sensitive database seed
+ProductionBoard.Data/Sql/003_SeedInitialUsers.sql
+# Temporary SQL queries
+SQLQuery1.sql
+SQLQuery3.sql

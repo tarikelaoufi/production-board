@@ -1,11 +1,11 @@
-﻿<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.1\build\net46\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props" Condition="Exists('packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.1\build\net46\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props')" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>
-    </ProductVersion>
+    <ProductVersion></ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{1ED444A8-9D12-44E5-8563-0FE31D85E591}</ProjectGuid>
     <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
@@ -21,8 +21,7 @@
     <IISExpressWindowsAuthentication />
     <IISExpressUseClassicPipelineMode />
     <UseGlobalApplicationHostFile />
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
+    <NuGetPackageImportStamp></NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -67,12 +66,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="BoardSetup.aspx" />
     <Content Include="FindBoard.aspx" />
     <Content Include="Global.asax" />
     <Content Include="HtmlPage1.html" />
     <Content Include="JavaScript.js" />
     <Content Include="Login.aspx" />
     <Content Include="LoginFr.aspx" />
+    <Content Include="Logout.aspx" />
     <Content Include="PB_page.aspx" />
     <Content Include="stylesheet.css" />
     <Content Include="Table.aspx" />
@@ -81,6 +82,13 @@
     <Content Include="WeeklySyntheses.aspx" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BoardSetup.aspx.cs">
+      <DependentUpon>BoardSetup.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="BoardSetup.aspx.designer.cs">
+      <DependentUpon>BoardSetup.aspx</DependentUpon>
+    </Compile>
     <Compile Include="FindBoard.aspx.cs">
       <DependentUpon>FindBoard.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -104,6 +112,13 @@
     </Compile>
     <Compile Include="LoginFr.aspx.designer.cs">
       <DependentUpon>LoginFr.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Logout.aspx.cs">
+      <DependentUpon>Logout.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Logout.aspx.designer.cs">
+      <DependentUpon>Logout.aspx</DependentUpon>
     </Compile>
     <Compile Include="PB_page.aspx.cs">
       <DependentUpon>PB_page.aspx</DependentUpon>
@@ -145,10 +160,12 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="App_Code\" />
     <Folder Include="App_Data\" />
     <Folder Include="JS\" />
     <Folder Include="Models\" />
   </ItemGroup>
+  <ItemGroup></ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
@@ -167,8 +184,7 @@
           <IISUrl>https://localhost:44370/</IISUrl>
           <NTLMAuthentication>False</NTLMAuthentication>
           <UseCustomServer>False</UseCustomServer>
-          <CustomServerUrl>
-          </CustomServerUrl>
+          <CustomServerUrl></CustomServerUrl>
           <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
         </WebProjectProperties>
       </FlavorProperties>
@@ -187,4 +203,15 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <ItemGroup></ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="ProductionBoard.Core\ProductionBoard.Core.csproj">
+      <Project>{E83479AC-5F1E-48AF-BDB5-683173956552}</Project>
+      <Name>ProductionBoard.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="ProductionBoard.Data\ProductionBoard.Data.csproj">
+      <Project>{DE2D4858-6875-495B-A7B0-641DA4B1D7B1}</Project>
+      <Name>ProductionBoard.Data</Name>
+    </ProjectReference>
+  </ItemGroup>
 </Project>

@@ -1,583 +1,2307 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="PB_page.aspx.cs" Inherits="PFF.PB_page" %> 
-
+<%@ Page Language="C#"
+    AutoEventWireup="true"
+    CodeBehind="PB_page.aspx.cs"
+    Inherits="PFF.PB_page"
+    ResponseEncoding="utf-8"
+    Culture="en-US"
+    UICulture="en" %>
 <!DOCTYPE html>
-
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
 <head runat="server">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Production Board</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+<style>
+:root{--blue:#1f709d;--light:#edf7fb;--ink:#263743;--line:#253743;--red:#aa4039}
+*{box-sizing:border-box}html,body{min-height:100%;margin:0}body{font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:#fff}button,input,textarea{font:inherit}
+.side{position:fixed;inset:0 auto 0 0;z-index:20;width:72px;overflow:hidden;border-right:1px solid #dce7ec;background:#fff;box-shadow:7px 0 24px rgba(30,75,99,.07);transition:.2s}.side.open{width:230px}.toggle{width:100%;height:72px;border:0;cursor:pointer;color:var(--blue);background:#fff;font-size:27px}.nav{display:flex;flex-direction:column;gap:7px;padding:7px 10px}.nav a{display:flex;align-items:center;height:47px;padding:0 14px;border-radius:11px;color:#5c7481;text-decoration:none;white-space:nowrap}.nav a:hover,.nav a.active{color:var(--blue);background:var(--light)}.nav i{width:32px;text-align:center}.nav span{margin-left:10px;opacity:0;font-size:14px;font-weight:700;transition:.15s}.side.open .nav span{opacity:1}
+.page{min-height:100vh;margin-left:72px;padding:12px 14px 16px;transition:.2s}.page.open{margin-left:230px}.wrap{width:100%;max-width:none;margin:0}.toolbar{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:9px}.toolbar h1{margin:0;color:#1e506b;font-size:clamp(22px,1.7vw,28px)}.toolbar p{margin:6px 0 0;color:#697b86;font-size:13px}.actions{display:flex;gap:8px;flex-wrap:wrap}.actions a{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:0 13px;border:1px solid #d2e0e7;border-radius:9px;color:var(--blue);background:#fff;text-decoration:none;font-size:13px;font-weight:700}
+.board{overflow:hidden;border:2px solid var(--line);background:#fff;box-shadow:0 10px 30px rgba(30,70,92,.08)}.board-title{padding:8px 16px;border-bottom:2px solid var(--line);text-align:center}.board-title h2{margin:0;color:#17262e;font-size:clamp(26px,2.4vw,38px);font-weight:800}.info{display:grid;grid-template-columns:minmax(125px,.9fr) minmax(125px,.9fr) minmax(125px,.9fr) minmax(160px,1.15fr) minmax(190px,1.35fr);border-bottom:2px solid var(--line)}.info-box{display:grid;grid-template-columns:auto 1fr;min-height:52px;border-right:2px solid var(--line)}.info-box:last-child{border-right:0}.info-key{display:flex;align-items:center;padding:0 9px;border-right:1px solid var(--line);background:#f7f9fa;font-size:13px;font-weight:800;text-transform:uppercase}.info-value{display:flex;align-items:center;min-width:0;padding:0 10px;overflow:hidden;color:var(--blue);font-size:clamp(14px,1.15vw,19px);font-weight:800;text-overflow:ellipsis;white-space:nowrap}
+.scroll{overflow-x:auto}table{width:100%;min-width:930px;border-collapse:collapse;table-layout:fixed}th,td{border-right:2px solid var(--line);border-bottom:2px solid var(--line)}tr>*:last-child{border-right:0}tbody tr:last-child td{border-bottom:0}thead th{height:60px;background:#fff}.clock{width:88px;font-size:24px}.metric{position:relative;width:135px;overflow:hidden}.metric:after,.diag:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(to top right,transparent calc(50% - 1px),var(--line) 50%,transparent calc(50% + 1px))}.metric .top,.diag .top{position:absolute;top:8px;right:9px;z-index:1}.metric .bottom,.diag .bottom{position:absolute;bottom:8px;left:9px;z-index:1}.comments{padding:0 18px;font-size:20px;text-align:center}.hour-row{cursor:pointer;outline:none}.hour-row:hover,.hour-row:focus{background:#f7fbfd}.hour-row td{height:clamp(50px,calc((100vh - 270px)/8),74px)}.hour{width:88px;padding:5px;text-align:center}.hour small{display:block;margin-bottom:3px;color:#667984;font-size:10px;font-weight:800}.time{display:inline-flex;align-items:center;justify-content:center;min-width:62px;height:30px;padding:0 6px;border:1px solid #9fc5d8;border-radius:999px;color:var(--blue);background:var(--light);font-size:16px;font-weight:800}.diag{position:relative;width:135px;overflow:hidden;font-size:18px}.diag .top,.diag .bottom{font-size:18px}.actual .top,.actual .bottom{color:#176f99}.scrap .top,.scrap .bottom{color:var(--red)}.comment{position:relative;min-width:340px;padding:10px 88px 10px 14px;text-align:left}.comment span{display:block;color:#354a56;line-height:1.4;word-break:break-word}.comment em{position:absolute;top:50%;right:12px;display:flex;align-items:center;gap:5px;transform:translateY(-50%);opacity:0;color:var(--blue);font-size:11px;font-style:normal;font-weight:800}.hour-row:hover .comment em,.hour-row:focus .comment em{opacity:1}.status{display:block;margin-top:11px;color:#b42318;font-size:13px;font-weight:700}
+dialog{width:calc(100% - 28px);max-width:560px;padding:0;border:0;border-radius:16px;background:#fff;box-shadow:0 28px 90px rgba(15,47,65,.32)}dialog::backdrop{background:rgba(17,39,52,.5);backdrop-filter:blur(3px)}.modal-head{display:flex;justify-content:space-between;gap:14px;padding:20px 22px 17px;border-bottom:1px solid #dce5e9;background:#f8fbfc}.modal-head h3{margin:0;color:#174e6b;font-size:21px}.modal-head p{margin:5px 0 0;color:#6b7b85;font-size:13px}.x{width:35px;height:35px;border:1px solid #d4e0e6;border-radius:9px;cursor:pointer;color:#536b78;background:#fff}.hour-nav{display:grid;grid-template-columns:38px minmax(0,1fr) 38px;align-items:center;gap:9px;padding:12px 22px;border-bottom:1px solid #dce5e9;background:#fff}
+.hour-nav-arrow{display:inline-flex;align-items:center;justify-content:center;width:38px;height:36px;border:1px solid #cad9e1;border-radius:9px;cursor:pointer;color:var(--blue);background:#fff}
+.hour-nav-arrow:hover:not(:disabled){border-color:#79aac3;background:var(--light)}
+.hour-nav-arrow:disabled{cursor:not-allowed;opacity:.35}
+.hour-tabs{display:grid;grid-template-columns:repeat(8,minmax(34px,1fr));gap:6px}
+.hour-tab{position:relative;min-width:0;height:34px;padding:0 5px;border:1px solid #cad9e1;border-radius:8px;cursor:pointer;color:#536b78;background:#fff;font-size:12px;font-weight:800}
+.hour-tab:hover{border-color:#79aac3;color:var(--blue);background:#f7fbfd}
+.hour-tab.active{border-color:var(--blue);color:#fff;background:var(--blue)}
+.hour-tab.dirty:after{content:"";position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:#ef8b2c}
+.hour-tab.active.dirty:after{background:#ffd8a8}
+.modal-body{padding:21px 22px 23px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field.full{grid-column:1/-1}.field label{display:block;margin-bottom:7px;color:#354c59;font-size:13px;font-weight:800}.input{width:100%;min-height:45px;padding:10px 12px;border:1px solid #cbd9e0;border-radius:9px;outline:none}.input:focus{border-color:#65a6c8;box-shadow:0 0 0 4px rgba(101,166,200,.14)}textarea.input{min-height:105px;resize:vertical}.error{display:none;margin-top:11px;padding:10px 12px;border:1px solid #f1c7c3;border-radius:8px;color:#b42318;background:#fff5f4;font-size:13px}.modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:19px}.btn{min-height:42px;padding:0 17px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:800}.cancel{border:1px solid #cbd9e0;color:#405763;background:#fff}.save-stay{border:1px solid var(--blue);color:var(--blue);background:#fff}.save-stay:hover{background:#f2f9fc}.save{border:1px solid var(--blue);color:#fff;background:var(--blue)}.success{display:none;margin-top:11px;padding:10px 12px;border:1px solid #b7dfc4;border-radius:8px;color:#176b35;background:#f0fbf4;font-size:13px;font-weight:700}
+@media(min-width:1600px){.page{padding:14px 18px 18px}.toolbar p{font-size:14px}.comments{font-size:22px}.comment span{font-size:16px}table{min-width:0}}@media(min-width:2200px){.side{width:84px}.side.open{width:250px}.page{margin-left:84px}.page.open{margin-left:250px}.hour-row td{height:clamp(60px,calc((100vh - 290px)/8),88px)}}@media(max-width:1100px){.info{grid-template-columns:repeat(3,minmax(0,1fr))}.info-box{border-bottom:2px solid var(--line)}.info-box:nth-child(3n){border-right:0}.info-box:nth-last-child(-n+2){border-bottom:0}.info-box:last-child{border-right:0}}@media(max-width:700px){.page{padding:17px 11px 27px}.toolbar{flex-direction:column}.info{grid-template-columns:1fr}.info-box,.info-box:nth-child(3n){border-right:0;border-bottom:2px solid var(--line)}.info-box:last-child{border-bottom:0}.grid{grid-template-columns:1fr}.field.full{grid-column:auto}}
+
+/* Compact laptop mode:
+   fits common 14-inch screens at browser zoom 100%. */
+@media (max-width:1500px), (max-height:850px){
+    .side{width:58px}
+    .side.open{width:200px}
+    .toggle{height:54px;font-size:22px}
+    .nav{gap:4px;padding:4px 7px}
+    .nav a{height:38px;padding:0 9px;border-radius:8px}
+    .nav i{width:27px;font-size:15px}
+    .nav span{margin-left:7px;font-size:12px}
+
+    .page{
+        margin-left:58px;
+        padding:6px 8px 8px;
+    }
+
+    .page.open{margin-left:200px}
+
+    .toolbar{
+        align-items:center;
+        gap:8px;
+        margin-bottom:5px;
+    }
+
+    .toolbar h1{font-size:19px}
+    .toolbar p{display:none}
+
+    .actions{gap:5px}
+    .actions a{
+        min-height:30px;
+        padding:0 9px;
+        border-radius:7px;
+        font-size:11px;
+    }
+
+    .board-title{padding:4px 10px}
+    .board-title h2{font-size:23px}
+
+    .info-box{min-height:38px}
+    .info-key{
+        padding:0 6px;
+        font-size:10px;
+    }
+
+    .info-value{
+        padding:0 7px;
+        font-size:13px;
+    }
+
+    table{min-width:820px}
+
+    thead th{height:44px}
+    .clock{width:70px;font-size:19px}
+    .metric{width:110px}
+    .metric .top,.diag .top{
+        top:5px;
+        right:6px;
+    }
+
+    .metric .bottom,.diag .bottom{
+        bottom:5px;
+        left:6px;
+    }
+
+    .metric .top,.metric .bottom{
+        font-size:12px;
+    }
+
+    .comments{
+        padding:0 10px;
+        font-size:15px;
+    }
+
+    .hour-row td{
+        height:clamp(38px,calc((100vh - 190px)/8),55px);
+    }
+
+    .hour{
+        width:70px;
+        padding:3px;
+    }
+
+    .hour small{
+        display:none;
+    }
+
+    .time{
+        min-width:54px;
+        height:25px;
+        padding:0 5px;
+        font-size:13px;
+    }
+
+    .diag{
+        width:110px;
+        font-size:14px;
+    }
+
+    .diag .top,.diag .bottom{
+        font-size:14px;
+    }
+
+    .comment{
+        min-width:280px;
+        padding:6px 60px 6px 9px;
+    }
+
+    .comment span{
+        font-size:12px;
+        line-height:1.25;
+    }
+
+    .comment em{
+        right:7px;
+        font-size:9px;
+    }
+
+    .status{
+        margin-top:5px;
+        font-size:11px;
+    }
+
+    dialog{max-width:470px}
+    .modal-head{padding:14px 16px 12px}
+    .modal-head h3{font-size:17px}
+    .modal-head p{font-size:11px}
+    .x{width:30px;height:30px}
+    .hour-nav{grid-template-columns:32px minmax(0,1fr) 32px;gap:5px;padding:8px 12px}
+    .hour-nav-arrow{width:32px;height:30px;border-radius:7px}
+    .hour-tabs{gap:3px}
+    .hour-tab{height:29px;padding:0 2px;border-radius:6px;font-size:10px}
+    .modal-body{padding:14px 16px 16px}
+    .grid{gap:10px}
+    .field label{margin-bottom:5px;font-size:11px}
+    .input{min-height:36px;padding:7px 9px;font-size:12px}
+    textarea.input{min-height:72px}
+    .modal-actions{margin-top:12px}
+    .btn{min-height:34px;padding:0 12px;font-size:11px}
+}
 
 
-    <title>Production BOARD</title>
-    <link href="stylesheet.css" rel="stylesheet" />
-    <style type="text/css">
-        .auto-style1 {
-            height: 23px;
-        }
-    </style>
+.server-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 40px;
+    padding: 0 13px;
+    border: 1px solid #d2e0e7;
+    border-radius: 9px;
+    color: var(--blue);
+    background: #ffffff;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.server-link:hover {
+    border-color: #8ebbd1;
+    background: #f6fafc;
+}
+
+.readonly-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 27px;
+    margin-top: 6px;
+    padding: 0 9px;
+    border: 1px solid #ddcda6;
+    border-radius: 999px;
+    color: #73551b;
+    background: #fff8e8;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+body.read-only .hour-row {
+    cursor: default;
+}
+
+body.read-only .hour-row:hover,
+body.read-only .hour-row:focus {
+    background: #ffffff;
+}
+
+body.read-only .comment em {
+    display: none;
+}
+
+@media (max-width:1500px), (max-height:850px) {
+    .server-link {
+        min-height: 30px;
+        padding: 0 9px;
+        border-radius: 7px;
+        font-size: 11px;
+    }
+
+    .readonly-badge {
+        min-height: 23px;
+        margin-top: 3px;
+        padding: 0 7px;
+        font-size: 9px;
+    }
+}
+
+
+/* Previous/next team navigation, board information and timeline. */
+.nav button.nav-action {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 47px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 11px;
+    cursor: pointer;
+    color: #5c7481;
+    background: transparent;
+    white-space: nowrap;
+    text-align: left;
+}
+
+.nav button.nav-action:hover {
+    color: var(--blue);
+    background: var(--light);
+}
+
+.nav button.nav-action i {
+    width: 32px;
+    text-align: center;
+}
+
+.nav button.nav-action span {
+    margin-left: 10px;
+    opacity: 0;
+    font-size: 14px;
+    font-weight: 700;
+    transition: .15s;
+}
+
+.side.open .nav button.nav-action span {
+    opacity: 1;
+}
+
+.nav .team-navigation-link {
+    position: relative;
+}
+
+.nav .team-navigation-link .arrow-left-icon {
+    animation: previous-team-arrow 1.15s ease-in-out infinite;
+}
+
+.nav .team-navigation-link .arrow-right-icon {
+    animation: next-team-arrow 1.15s ease-in-out infinite;
+}
+
+@keyframes previous-team-arrow {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(-5px); }
+}
+
+@keyframes next-team-arrow {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(5px); }
+}
+
+.board-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 124px;
+    min-width: 0;
+}
+
+.board-body .scroll {
+    min-width: 0;
+}
+
+.timeline-card {
+    min-width: 0;
+    border-left: 2px solid var(--line);
+    background: #fbfdfe;
+}
+
+.timeline-heading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 60px;
+    padding: 0 8px;
+    border-bottom: 2px solid var(--line);
+    color: #36515f;
+    font-size: 12px;
+    font-weight: 800;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.timeline-list {
+    position: relative;
+    display: grid;
+    grid-template-rows: repeat(8, clamp(50px, calc((100vh - 270px) / 8), 74px));
+}
+
+.timeline-list::before {
+    content: "";
+    position: absolute;
+    top: 18px;
+    bottom: 18px;
+    left: 28px;
+    width: 3px;
+    border-radius: 999px;
+    background: #d4e0e6;
+}
+
+.timeline-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 0;
+    padding: 4px 5px 4px 47px;
+    border-bottom: 2px solid #e1e9ed;
+}
+
+.timeline-item:last-child {
+    border-bottom: 0;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: 17px;
+    z-index: 1;
+    width: 24px;
+    height: 24px;
+    border: 3px solid #ffffff;
+    border-radius: 999px;
+    background: #9fb3be;
+    box-shadow: 0 0 0 1px #b9c9d1;
+}
+
+.timeline-item.completed .timeline-marker {
+    background: #54a56b;
+    box-shadow: 0 0 0 1px #75b788;
+}
+
+.timeline-item.scrap-event .timeline-marker {
+    background: #d85e54;
+    box-shadow: 0 0 0 1px #df8179;
+}
+
+.timeline-item.comment-event .timeline-marker {
+    background: #e5a443;
+    box-shadow: 0 0 0 1px #eabe78;
+}
+
+.timeline-content {
+    min-width: 0;
+}
+
+.timeline-time {
+    display: block;
+    overflow: hidden;
+    color: #1c658e;
+    font-size: 12px;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.timeline-detail {
+    display: block;
+    overflow: hidden;
+    margin-top: 2px;
+    color: #6a7b85;
+    font-size: 9px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.info-dialog {
+    max-width: 590px;
+}
+
+.board-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px;
+}
+
+.board-info-item {
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid #dce7ec;
+    border-radius: 10px;
+    background: #f8fbfc;
+}
+
+.board-info-item.full {
+    grid-column: 1 / -1;
+}
+
+.board-info-label {
+    display: block;
+    margin-bottom: 5px;
+    color: #71828c;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.board-info-value {
+    display: block;
+    overflow: hidden;
+    color: #1d668f;
+    font-size: 14px;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.info-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 16px;
+}
+
+@media (max-width: 1050px) {
+    .board-body {
+        grid-template-columns: minmax(0, 1fr) 105px;
+    }
+
+    .timeline-heading {
+        font-size: 10px;
+    }
+
+    .timeline-item {
+        padding-left: 42px;
+    }
+
+    .timeline-list::before {
+        left: 24px;
+    }
+
+    .timeline-marker {
+        left: 13px;
+    }
+}
+
+@media (max-width: 820px) {
+    .board-body {
+        display: block;
+    }
+
+    .timeline-card {
+        border-top: 2px solid var(--line);
+        border-left: 0;
+    }
+
+    .timeline-heading {
+        height: 38px;
+    }
+
+    .timeline-list {
+        grid-template-columns: repeat(8, minmax(90px, 1fr));
+        grid-template-rows: none;
+        overflow-x: auto;
+    }
+
+    .timeline-list::before {
+        top: 21px;
+        right: 22px;
+        bottom: auto;
+        left: 22px;
+        width: auto;
+        height: 3px;
+    }
+
+    .timeline-item {
+        min-height: 72px;
+        padding: 35px 6px 7px;
+        border-right: 1px solid #e1e9ed;
+        border-bottom: 0;
+        text-align: center;
+    }
+
+    .timeline-marker {
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+}
+
+@media (max-width:1500px), (max-height:850px) {
+    .nav button.nav-action {
+        height: 38px;
+        padding: 0 9px;
+        border-radius: 8px;
+    }
+
+    .nav button.nav-action i {
+        width: 27px;
+        font-size: 15px;
+    }
+
+    .nav button.nav-action span {
+        margin-left: 7px;
+        font-size: 12px;
+    }
+
+    .board-body {
+        grid-template-columns: minmax(0, 1fr) 104px;
+    }
+
+    .timeline-heading {
+        height: 44px;
+        font-size: 9px;
+    }
+
+    .timeline-list {
+        grid-template-rows: repeat(8, clamp(38px, calc((100vh - 190px) / 8), 55px));
+    }
+
+    .timeline-list::before {
+        left: 22px;
+    }
+
+    .timeline-item {
+        padding-left: 39px;
+    }
+
+    .timeline-marker {
+        left: 11px;
+        width: 22px;
+        height: 22px;
+    }
+
+    .timeline-time {
+        font-size: 10px;
+    }
+
+    .timeline-detail {
+        font-size: 8px;
+    }
+}
+
+
+/* FR / EN navigation */
+.language-navigation #languageNavText {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Hourly performance colors. */
+.hour-row {
+    position: relative;
+    transition:
+        background-color .2s ease,
+        box-shadow .2s ease;
+}
+
+.hour-row td {
+    transition:
+        background-color .2s ease,
+        border-color .2s ease;
+}
+
+.hour-row.status-pending td {
+    background: #ffffff;
+}
+
+.hour-row.status-green td {
+    background: #eaf8ef;
+}
+
+.hour-row.status-yellow td {
+    background: #fff9d9;
+}
+
+.hour-row.status-orange td {
+    background: #fff0df;
+}
+
+.hour-row.status-red td {
+    background: #fde9e7;
+}
+
+.hour-row.status-green .time {
+    border-color: #65ad79;
+    color: #226b38;
+    background: #dff3e5;
+}
+
+.hour-row.status-yellow .time {
+    border-color: #d7b64c;
+    color: #715b0f;
+    background: #fff2b8;
+}
+
+.hour-row.status-orange .time {
+    border-color: #df9145;
+    color: #814a14;
+    background: #ffe0bd;
+}
+
+.hour-row.status-red .time {
+    border-color: #d7655d;
+    color: #8f2f29;
+    background: #f8d0cc;
+}
+
+.hour-row.status-green {
+    box-shadow: inset 5px 0 0 #54a56b;
+}
+
+.hour-row.status-yellow {
+    box-shadow: inset 5px 0 0 #d6b339;
+}
+
+.hour-row.status-orange {
+    box-shadow: inset 5px 0 0 #e29443;
+}
+
+.hour-row.status-red {
+    box-shadow: inset 5px 0 0 #d85e54;
+}
+
+/* Timeline uses exactly the same status colors as the table rows. */
+.timeline-item.performance-pending .timeline-marker {
+    background: #9fb3be;
+    box-shadow: 0 0 0 1px #b9c9d1;
+}
+
+.timeline-item.performance-green .timeline-marker {
+    background: #54a56b;
+    box-shadow: 0 0 0 1px #75b788;
+}
+
+.timeline-item.performance-yellow .timeline-marker {
+    background: #d6b339;
+    box-shadow: 0 0 0 1px #e3ca72;
+}
+
+.timeline-item.performance-orange .timeline-marker {
+    background: #e29443;
+    box-shadow: 0 0 0 1px #e9b474;
+}
+
+.timeline-item.performance-red .timeline-marker {
+    background: #d85e54;
+    box-shadow: 0 0 0 1px #df8179;
+}
+
+
+.btn:disabled {
+    cursor: wait;
+    opacity: .58;
+}
+
+.modal-saving-indicator {
+    display: none;
+    align-items: center;
+    gap: 7px;
+    margin-right: auto;
+    color: #5d7481;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.modal-saving-indicator.visible {
+    display: inline-flex;
+}
+
+.modal-saving-indicator i {
+    animation: modal-save-spin .8s linear infinite;
+}
+
+@keyframes modal-save-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+</style>
 </head>
-	
- <!-- Link to Font Awesome CSS -->
-    <!-- Link to your external CSS -->
+<body>
+<form id="form1" runat="server">
+<asp:HiddenField
+    ID="CanEditProductionBoardHiddenField"
+    runat="server"
+    ClientIDMode="Static"
+    Value="false" />
+<asp:HiddenField
+    ID="CurrentBoardIdHiddenField"
+    runat="server"
+    ClientIDMode="Static"
+    Value="0" />
+<aside id="side" class="side">
+<button type="button" class="toggle" onclick="toggleMenu()" title="Menu"><i class="fa-solid fa-bars"></i></button>
+<nav class="nav">
+<a class="active" href="PB_page.aspx" title="Production Board">
+<i class="fa-solid fa-table-cells-large"></i><span data-i18n="nav.productionBoard">Production Board</span>
+</a>
+
+<button type="button" class="nav-action" onclick="openBoardInfo()" title="Tableau de marche information">
+<i class="fa-solid fa-circle-info"></i><span data-i18n="nav.boardInfo">Board information</span>
+</button>
+
+<asp:HyperLink
+    ID="PreviousBoardLink"
+    runat="server"
+    CssClass="team-navigation-link"
+    ToolTip="Previous team production board"
+    Visible="false">
+    <i class="fa-solid fa-arrow-left-long arrow-left-icon"></i>
+    <span data-i18n="nav.previousTeam">Previous team</span>
+</asp:HyperLink>
+
+<asp:HyperLink
+    ID="NextBoardLink"
+    runat="server"
+    CssClass="team-navigation-link"
+    ToolTip="Next team production board"
+    Visible="false">
+    <i class="fa-solid fa-arrow-right-long arrow-right-icon"></i>
+    <span data-i18n="nav.nextTeam">Next team</span>
+</asp:HyperLink>
+
+<a href="WeeklySyntheses.aspx" title="Weekly synthesis">
+<i class="fa-solid fa-chart-column"></i><span data-i18n="nav.weekly">Weekly Synthesis</span>
+</a>
 
 
- <body>
-     
-<!-- modal de 1er heure-->
+<button type="button"
+        class="nav-action language-navigation app-language-trigger"
+        data-app-language-trigger="true"
+        title="Language">
+    <i class="fa-solid fa-language"></i>
+    <span id="languageNavText"
+          class="app-language-label"
+          data-app-language-label="true">
+        Language &middot; EN
+    </span>
+</button>
 
-     <form id="form1" runat="server">
-   
-<input type="checkbox" id="openDialog" style="display: none"/>
+<a href="FindBoard.aspx" title="Find a board">
+<i class="fa-solid fa-magnifying-glass"></i><span data-i18n="nav.findBoard">Find a board</span>
+</a>
 
-<dialog id="myDialog" >
-   <div class="row">
-  <div class="col-75">
-    <div class="containerModal">
-        <div class="row">
-          <div class="col-50">
-            <h3>Production Hourly update: H1</h3>
-            <label>Quantité totale des pièces réels:</label>
-              <asp:TextBox id="r1" runat="server"></asp:TextBox>
-            <input type="number" placeholder="Quantité totale des pièces réels"  id="inputValue" required="required" />
-            <label>Quantité totale des pièces rebuts:</label>
-            <input type="number" placeholder="Quantité totale des pièces rebuts" id="inputrubut" required="required" />
-            <label for="adr">Commentaires</label>
-            <input type="text" placeholder="Commentaires" id="inputcomment" required="required" />
-            </div></div>              
-               <input formmethod="dialog" type="submit"  onclick="updateLabelValue() "  value="Save" class="btn"/>
-        <input formmethod="dialog" type="button" onclick="cancelDialog()"  value="Cancel" class="btn"/>  </div>
-  </div></div>
-    
-</dialog>
-<!-- modal de 2er heure-->
-<input type="checkbox" id="openDialog2" style="display: none"/>
-<dialog id="myDialog2" >
-    <div class="row">
-  <div class="col-75">
-    <div class="containerModal">
-        <div class="row">
-          <div class="col-50">
-            <h3>Production Hourly update: H2</h3>
-            <label>Quantité totale des pièces réels:</label>
-            <input type="number" placeholder="Quantité totale des pièces réels"  id="inputValue2" required="required" />
-            <label>Quantité totale des pièces rebuts:</label>
-            <input type="number" placeholder="Quantité totale des pièces rebuts" id="inputrubut2" required="required" />
-            <label for="adr">Commentaires</label>
-            <input type="text" placeholder="Commentaires" id="inputcomment2" required="required" />
-            </div></div>
-               <input formmethod="dialog" type="submit"  onclick="updateLabelValue2()" value="Save" class="btn"/>
-        <input formmethod="dialog" type="button" onclick="cancelDialog2()"  value="Cancel" class="btn"/>  </div>
-  </div></div>
-    
-</dialog>
-<!-- modal de 3eme heure-->
-<input type="checkbox" id="openDialog3" style="display: none"/>
-<dialog id="myDialog3" >
-    <div><div class="row">
-  <div class="col-75">
-    <div class="containerModal">
-        <div class="row">
-          <div class="col-50">
-            <h3>Production Hourly update: H3</h3>
-            <label>Quantité totale des pièces réels:</label>
-            <input type="number" placeholder="Quantité totale des pièces réels"  id="inputValue3" required="required" />
-            <label>Quantité totale des pièces rebuts:</label>
-            <input type="number" placeholder="Quantité totale des pièces rebuts" id="inputrubut3" required="required" />
-            <label for="adr">Commentaires</label>
-            <input type="text" placeholder="Commentaires" id="inputcomment3" required="required" />
-            </div></div>        
-               <input formmethod="dialog" type="submit"  onclick="updateLabelValue3()" value="Save" class="btn"/>
-        <input formmethod="dialog" type="button" onclick="cancelDialog3()" value="Cancel" class="btn"/>  </div>
-  </div></div>
+<a href="BoardSetup.aspx" title="Change board">
+<i class="fa-solid fa-sliders"></i><span data-i18n="nav.changeBoard">Change board</span>
+</a>
+
+<a href="Logout.aspx" title="Sign out">
+<i class="fa-solid fa-right-from-bracket"></i><span data-i18n="nav.signOut">Sign out</span>
+</a>
+</nav>
+</aside>
+<main id="page" class="page"><div class="wrap">
+<header class="toolbar">
+<div>
+    <h1 data-i18n="page.title">Production Board</h1>
+
+    <p>
+        <span data-i18n="page.subtitle">Use the animated arrows in the navigation bar to move between team boards.</span>
+    </p>
+
+    <asp:Label
+        ID="ReadOnlyModeLabel"
+        runat="server"
+        CssClass="readonly-badge"
+        Visible="false" />
+</div>
+
+<div class="actions">
+    <a href="FindBoard.aspx">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <span data-i18n="nav.findBoard">Find board</span>
+    </a>
+
+    <a href="WeeklySyntheses.aspx">
+        <i class="fa-solid fa-chart-line"></i>
+        <span data-i18n="nav.weekly">Weekly Synthesis</span>
+    </a>
+
+    <a href="javascript:void(0)" onclick="openBoardInfo()">
+        <i class="fa-solid fa-circle-info"></i>
+        <span data-i18n="nav.boardInfo">Board info</span>
+    </a>
+</div>
+</header>
+<section class="board">
+<div class="board-title"><h2 data-i18n="page.boardTitle">Production Board</h2></div>
+<div class="info">
+<div class="info-box">
+<span class="info-key" data-i18n="info.date">Date</span>
+<asp:Label ID="DateLabel" runat="server" ClientIDMode="Static" CssClass="info-value" Text="Date" />
+</div>
+<div class="info-box">
+<span class="info-key" data-i18n="info.shift">Shift</span>
+<asp:Label ID="ShiftLabel" runat="server" ClientIDMode="Static" CssClass="info-value" Text="Shift" />
+</div>
+<div class="info-box">
+<span class="info-key" data-i18n="info.team">Team</span>
+<asp:Label ID="TeamLabel" runat="server" ClientIDMode="Static" CssClass="info-value" Text="Team" />
+</div>
+<div class="info-box">
+<span class="info-key" data-i18n="info.product">Product</span>
+<asp:Label ID="ProductLabel" runat="server" ClientIDMode="Static" CssClass="info-value" Text="Product" />
+</div>
+<div class="info-box">
+<span class="info-key" data-i18n="info.line">Line</span>
+<asp:Label ID="PLLabel" runat="server" ClientIDMode="Static" CssClass="info-value" Text="Production line" />
+</div>
+</div>
+<div class="board-body">
+<div class="scroll"><table aria-label="Hourly production board"><thead><tr>
+<th class="clock"><i class="fa-regular fa-clock"></i></th>
+<th class="metric"><span class="top" data-i18n="table.target">Target</span><span class="bottom" data-i18n="table.cumulative">Cumulative</span></th>
+<th class="metric"><span class="top" data-i18n="table.actual">Actual</span><span class="bottom" data-i18n="table.cumulative">Cumulative</span></th>
+<th class="metric"><span class="top" data-i18n="table.scrap">Scrap</span><span class="bottom" data-i18n="table.cumulative">Cumulative</span></th>
+<th class="comments" data-i18n="table.comments">Comments</th>
+</tr></thead><tbody>
+<tr id="hourRow1" data-hour="1" class="hour-row status-pending" onclick="openHourModal(1)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openHourModal(1);}">
+<td class="hour"><small>H1</small><asp:Label ID="h1Label" runat="server" CssClass="time" Text="1" /></td>
+<td class="diag target"><b class="top"><asp:Label ID="h1Object" runat="server" Text="0" /></b><b class="bottom"><asp:Label ID="OBJ_CML1" runat="server" Text="0" /></b></td>
+<td class="diag actual"><b class="top"><asp:Label ID="reel_h1" runat="server" ClientIDMode="Static" Text="0" /></b><b class="bottom" id="cumul_h1">0</b></td>
+<td class="diag scrap"><b class="top" id="rubut_h1">0</b><b class="bottom" id="cumulrubut_h1">0</b></td>
+<td class="comment"><span id="Commentaire_h1">&mdash;</span><em><i class="fa-solid fa-pen"></i><b data-i18n="table.update">Update</b></em></td>
+</tr>
+<tr id="hourRow2" data-hour="2" class="hour-row status-pending" onclick="openHourModal(2)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openHourModal(2);}">
+<td class="hour"><small>H2</small><asp:Label ID="h2Label" runat="server" CssClass="time" Text="2" /></td>
+<td class="diag target"><b class="top"><asp:Label ID="h2Object" runat="server" Text="0" /></b><b class="bottom"><asp:Label ID="OBJ_CML2" runat="server" Text="0" /></b></td>
+<td class="diag actual"><b class="top"><span id="reel_h2">0</span></b><b class="bottom" id="cumul_h2">0</b></td>
+<td class="diag scrap"><b class="top" id="rubut_h2">0</b><b class="bottom" id="cumulrubut_h2">0</b></td>
+<td class="comment"><span id="Commentaire_h2">&mdash;</span><em><i class="fa-solid fa-pen"></i><b data-i18n="table.update">Update</b></em></td>
+</tr>
+<tr id="hourRow3" data-hour="3" class="hour-row status-pending" onclick="openHourModal(3)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openHourModal(3);}">
+<td class="hour"><small>H3</small><asp:Label ID="h3Label" runat="server" CssClass="time" Text="3" /></td>
+<td class="diag target"><b class="top"><asp:Label ID="h3Object" runat="server" Text="0" /></b><b class="bottom"><asp:Label ID="OBJ_CML3" runat="server" Text="0" /></b></td>
+<td class="diag actual"><b class="top"><span id="reel_h3">0</span></b><b class="bottom" id="cumul_h3">0</b></td>
+<td class="diag scrap"><b class="top" id="rubut_h3">0</b><b class="bottom" id="cumulrubut_h3">0</b></td>
+<td class="comment"><span id="Commentaire_h3">&mdash;</span><em><i class="fa-solid fa-pen"></i><b data-i18n="table.update">Update</b></em></td>
+</tr>
+<tr id="hourRow4" data-hour="4" class="hour-row status-pending" onclick="openHourModal(4)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openHourModal(4);}">
+<td class="hour"><small>H4</small><asp:Label ID="h4Label" runat="server" CssClass="time" Text="4" /></td>
+<td class="diag target"><b class="top"><asp:Label ID="h4Object" runat="server" Text="0" /></b><b class="bottom"><asp:Label ID="OBJ_CML4" runat="server" Text="0" /></b></td>
+<td class="diag actual"><b class="top"><span id="reel_h4">0</span></b><b class="bottom" id="cumul_h4">0</b></td>
+<td class="diag scrap"><b class="top" id="rubut_h4">0</b><b class="bottom" id="cumulrubut_h4">0</b></td>
+<td class="comment"><span id="Commentaire_h4">&mdash;</span><em><i class="fa-solid fa-pen"></i><b data-i18n="table.update">Update</b></em></td>
+</tr>
+<tr id="hourRow5" data-hour="5" class="hour-row status-pending" onclick="openHourModal(5)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openHourModal(5);}">
+<td class="hour"><small>H5</small><asp:Label ID="h5Label" runat="server" CssClass="time" Text="5" /></td>
+<td class="diag target"><b class="top"><asp:Label ID="h5Object" runat="server" Text="0" /></b><b class="bottom"><asp:Label ID="OBJ_CML5" runat="server" Text="0" /></b></td>
+<td class="diag actual"><b class="top"><span id="reel_h5">0</span></b><b class="bottom" id="cumul_h5">0</b></td>
+<td class="diag scrap"><b class="top" id="rubut_h5">0</b><b class="bottom" id="cumulrubut_h5">0</b></td>
+<td class="comment"><span id="Commentaire_h5">&mdash;</span><em><i class="fa-solid fa-pen"></i><b data-i18n="table.update">Update</b></em></td>
+</tr>
+<tr id="hourRow6" data-hour="6" class="hour-row status-pending" onclick="openHourModal(6)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openHourModal(6);}">
+<td class="hour"><small>H6</small><asp:Label ID="h6Label" runat="server" CssClass="time" Text="6" /></td>
+<td class="diag target"><b class="top"><asp:Label ID="h6Object" runat="server" Text="0" /></b><b class="bottom"><asp:Label ID="OBJ_CML6" runat="server" Text="0" /></b></td>
+<td class="diag actual"><b class="top"><span id="reel_h6">0</span></b><b class="bottom" id="cumul_h6">0</b></td>
+<td class="diag scrap"><b class="top" id="rubut_h6">0</b><b class="bottom" id="cumulrubut_h6">0</b></td>
+<td class="comment"><span id="Commentaire_h6">&mdash;</span><em><i class="fa-solid fa-pen"></i><b data-i18n="table.update">Update</b></em></td>
+</tr>
+<tr id="hourRow7" data-hour="7" class="hour-row status-pending" onclick="openHourModal(7)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openHourModal(7);}">
+<td class="hour"><small>H7</small><asp:Label ID="h7Label" runat="server" CssClass="time" Text="7" /></td>
+<td class="diag target"><b class="top"><asp:Label ID="h7Object" runat="server" Text="0" /></b><b class="bottom"><asp:Label ID="OBJ_CML7" runat="server" Text="0" /></b></td>
+<td class="diag actual"><b class="top"><span id="reel_h7">0</span></b><b class="bottom" id="cumul_h7">0</b></td>
+<td class="diag scrap"><b class="top" id="rubut_h7">0</b><b class="bottom" id="cumulrubut_h7">0</b></td>
+<td class="comment"><span id="Commentaire_h7">&mdash;</span><em><i class="fa-solid fa-pen"></i><b data-i18n="table.update">Update</b></em></td>
+</tr>
+<tr id="hourRow8" data-hour="8" class="hour-row status-pending" onclick="openHourModal(8)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openHourModal(8);}">
+<td class="hour"><small>H8</small><asp:Label ID="h8Label" runat="server" CssClass="time" Text="8" /></td>
+<td class="diag target"><b class="top"><asp:Label ID="h8Object" runat="server" Text="0" /></b><b class="bottom"><asp:Label ID="OBJ_CML8" runat="server" Text="0" /></b></td>
+<td class="diag actual"><b class="top"><span id="reel_h8">0</span></b><b class="bottom" id="cumul_h8">0</b></td>
+<td class="diag scrap"><b class="top" id="rubut_h8">0</b><b class="bottom" id="cumulrubut_h8">0</b></td>
+<td class="comment"><span id="Commentaire_h8">&mdash;</span><em><i class="fa-solid fa-pen"></i><b data-i18n="table.update">Update</b></em></td>
+</tr>
+</tbody></table></div>
+<aside class="timeline-card" aria-label="Shift production timeline">
+    <div class="timeline-heading">
+        <span data-i18n="timeline.title">Shift timeline</span>
     </div>
-</dialog>
-<!-- modal de 4eme heure-->
-<input type="checkbox" id="openDialog4" style="display: none"/>
-<dialog id="myDialog4" >
-    <div><div class="row">
-  <div class="col-75">
-    <div class="containerModal">
-        <div class="row">
-          <div class="col-50">
-            <h3>Production Hourly update: H4</h3>
-            <label>Quantité totale des pièces réels:</label>
-            <input type="number" placeholder="Quantité totale des pièces réels"  id="inputValue4" required="required" />
-            <label>Quantité totale des pièces rebuts:</label>
-            <input type="number" placeholder="Quantité totale des pièces rebuts" id="inputrubut4" required="required" />
-            <label for="adr">Commentaires</label>
-            <input type="text" placeholder="Commentaires" id="inputcomment4" required="required" />
-            </div></div>        
-               <input formmethod="dialog" type="submit"  onclick="updateLabelValue4()" value="Save" class="btn"/>
-        <input formmethod="dialog" type="button" onclick="cancelDialog4()" value="Cancel" class="btn"/>  </div>
-  </div></div>
+
+    <div id="productionTimeline" class="timeline-list"></div>
+</aside>
+</div>
+</section>
+<asp:Label ID="lblCOUCOU" runat="server" CssClass="status" Text="" />
+</div></main>
+<dialog id="boardInfoDialog" class="info-dialog">
+<div class="modal-head">
+    <div>
+        <h3 data-i18n="boardInfo.title">Production board information</h3>
+        <p data-i18n="boardInfo.subtitle">Current production board information.</p>
     </div>
-</dialog>
-<!-- modal de 5eme heure-->
-<input type="checkbox" id="openDialog5" style="display: none"/>
-<dialog id="myDialog5" >
-    <div><div class="row">
-  <div class="col-75">
-    <div class="containerModal">
-        <div class="row">
-          <div class="col-50">
-            <h3>Production Hourly update: H5</h3>
-            <label>Quantité totale des pièces réels:</label>
-            <input type="number" placeholder="Quantité totale des pièces réels"  id="inputValue5" required="required" />
-            <label>Quantité totale des pièces rebuts:</label>
-            <input type="number" placeholder="Quantité totale des pièces rebuts" id="inputrubut5" required="required" />
-            <label for="adr">Commentaires</label>
-            <input type="text" placeholder="Commentaires" id="inputcomment5" required="required" />
-            </div></div>        
-               <input formmethod="dialog" type="submit"  onclick="updateLabelValue5()"  value="Save" class="btn"/>
-        <input formmethod="dialog" type="button" onclick="cancelDialog5()" value="Cancel" class="btn"/>  </div>
-  </div></div>
+
+    <button type="button" class="x" onclick="closeBoardInfo()" aria-label="Close board information">
+        <i class="fa-solid fa-xmark"></i>
+    </button>
+</div>
+
+<div class="modal-body">
+    <div class="board-info-grid">
+        <div class="board-info-item">
+            <span class="board-info-label" data-i18n="boardInfo.id">Board ID</span>
+            <span id="infoBoardId" class="board-info-value">0</span>
+        </div>
+
+        <div class="board-info-item">
+            <span class="board-info-label" data-i18n="info.date">Date</span>
+            <span id="infoDate" class="board-info-value">&mdash;</span>
+        </div>
+
+        <div class="board-info-item">
+            <span class="board-info-label" data-i18n="info.team">Team</span>
+            <span id="infoTeam" class="board-info-value">&mdash;</span>
+        </div>
+
+        <div class="board-info-item">
+            <span class="board-info-label" data-i18n="info.shift">Shift</span>
+            <span id="infoShift" class="board-info-value">&mdash;</span>
+        </div>
+
+        <div class="board-info-item">
+            <span class="board-info-label" data-i18n="info.product">Product</span>
+            <span id="infoProduct" class="board-info-value">&mdash;</span>
+        </div>
+
+        <div class="board-info-item">
+            <span class="board-info-label" data-i18n="boardInfo.productionLine">Production line</span>
+            <span id="infoLine" class="board-info-value">&mdash;</span>
+        </div>
+
+        <div class="board-info-item full">
+            <span class="board-info-label" data-i18n="boardInfo.accessMode">Access mode</span>
+            <span id="infoAccessMode" class="board-info-value">&mdash;</span>
+        </div>
     </div>
-</dialog>
-<!-- modal de 6eme heure-->
-<input type="checkbox" id="openDialog6" style="display: none"/>
-<dialog id="myDialog6" >
-    <div><div class="row">
-  <div class="col-75">
-    <div class="containerModal">
-        <div class="row">
-          <div class="col-50">
-            <h3>Production Hourly update: H6</h3>
-            <label>Quantité totale des pièces réels:</label>
-            <input type="number" placeholder="Quantité totale des pièces réels"  id="inputValue6" required="required" />
-            <label>Quantité totale des pièces rebuts:</label>
-            <input type="number" placeholder="Quantité totale des pièces rebuts" id="inputrubut6" required="required" />
-            <label for="adr">Commentaires</label>
-            <input type="text" placeholder="Commentaires" id="inputcomment6" required="required" />
-            </div></div>        
-               <input formmethod="dialog" type="submit"  onclick="updateLabelValue6()" value="Save" class="btn"/>
-        <input formmethod="dialog" type="button" onclick="cancelDialog6()" value="Cancel" class="btn"/>  </div>
-  </div></div>
+
+    <div class="info-dialog-actions">
+        <button type="button" class="btn save" onclick="closeBoardInfo()" data-i18n="common.close">
+            Close
+        </button>
     </div>
-</dialog>
-<!-- modal de 7eme heure-->
-<input type="checkbox" id="openDialog7" style="display: none"/>
-<dialog id="myDialog7" >
-    <div><div class="row">
-  <div class="col-75">
-    <div class="containerModal">
-        <div class="row">
-          <div class="col-50">
-            <h3>Production Hourly update: H7</h3>
-            <label>Quantité totale des pièces réels:</label>
-            <input type="number" placeholder="Quantité totale des pièces réels"  id="inputValue7" required="required" />
-            <label>Quantité totale des pièces rebuts:</label>
-            <input type="number" placeholder="Quantité totale des pièces rebuts" id="inputrubut7" required="required" />
-            <label for="adr">Commentaires</label>
-            <input type="text" placeholder="Commentaires" id="inputcomment7" required="required" />
-            </div></div>        
-               <input formmethod="dialog" type="submit"  onclick="updateLabelValue7()"  value="Save" class="btn"/>
-        <input formmethod="dialog" type="button" onclick="cancelDialog7()" value="Cancel" class="btn"/>  </div>
-  </div></div>
-    </div>
-</dialog>
-<!-- modal de 8eme heure-->
-<input type="checkbox" id="openDialog8" style="display: none"/>
-<dialog id="myDialog8" >
-    <div><div class="row">
-  <div class="col-75">
-    <div class="containerModal">
-        <div class="row">
-          <div class="col-50">
-            <h3>Production Hourly update: H8</h3>
-            <label>Quantité totale des pièces réels:</label>
-            <input type="number" placeholder="Quantité totale des pièces réels"  id="inputValue8" required="required" />
-            <label>Quantité totale des pièces rebuts:</label>
-            <input type="number" placeholder="Quantité totale des pièces rebuts" id="inputrubut8" required="required" />
-            <label for="adr">Commentaires</label>
-            <input type="text" placeholder="Commentaires" id="inputcomment8" required="required" />
-            </div></div>        
-        <input formmethod="dialog" type="submit"  onclick="updateLabelValue8()" value="Save" class="btn"/>
-        <input formmethod="dialog" type="button" onclick="cancelDialog8()"  value="Cancel" class="btn"/></div>
-  </div></div>
-    </div>
-</dialog>
-<!-- modal pour definir la langue-->
-<input type="checkbox" id="openDialog9" style="display: none"/>
-<dialog id="myDialog9" >
-    <div ><div class="row">
-  <div class="col-75">
-    <div class="containerModal">
-        <div class="row" >
-          <div class="col-50">
-            <h3>Change language</h3>
-            <label>Select a language:</label>
-         <%--     <asp:DropDownList ID="DropDownListLanguages" class="inputdropdown" AppendDataBoundItems="true" runat="server" Width="153px">
-     <asp:ListItem Text="English" Value="EN" />
-     <asp:ListItem Text="French" Value="FR" />
-</asp:DropDownList>--%>
-            </div></div>        
-        <input formmethod="dialog" type="submit"  onclick="updateLabelValue8()" value="Save" class="btn"/>
-        <input formmethod="dialog" type="button" onclick="cancelDialog9()"  value="Cancel" class="btn"/></div>
-  </div></div>
-    </div>
+</div>
 </dialog>
 
+<dialog id="hourModal">
+<div class="modal-head">
+<div><h3 id="modalTitle">Update production hour</h3><p data-i18n="modal.subtitle">Move between H1 and H8 without closing the modal.</p></div>
+<button type="button" class="x" onclick="closeHourModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+</div>
 
-	<div id="sideMenu" class="sideMenu" onclick="openNav()">
-	
-	<Tooltip title="Menu" arrow><span style="  color: white; cursor: pointer;  margin-top:  0px;"
-			onclick="openNav()"><i style="font-size: 40px; margin-top:  -120px;  margin-left:  30px;" class="fa-solid fa-bars"></i></span></Tooltip>
-	
+<div class="hour-nav" aria-label="Choose an hour">
+<button id="previousHourButton" type="button" class="hour-nav-arrow" onclick="navigateHour(-1)" aria-label="Previous hour">
+<i class="fa-solid fa-chevron-left"></i>
+</button>
 
-		<div class="mainMenu" onclick="openNav()" style=" padding-top:75px;" >
-			
-			
-			<a href="PB_page.aspx"
-				onclick="showContent('Production Board')" ><i class="fa-solid fa-marker">&nbsp;</i><div id="HideItem">Production Board</div> </a>
-			<a href="WeeklySyntheses.aspx"
-				onclick="showContent('WEEKLY Synthese</')">  <i class="fa-solid fa-calendar-week">&nbsp; </i><div id="HideItem2">WEEKLY Synthese </div></a>
-			<a href="FindBoard.aspx"
-				onclick="showContent('Find a board')"> <i class="fa-solid fa-upload">&nbsp;</i><div id="HideItem3">Find a board</div></a>			
-			<a href="javascript:void(0)" onclick="showContent('Language')" 
-				for="openDialog9"> <i class="fa-solid fa-language" for="openDialog9">&nbsp;</i><label style="cursor: pointer;"id="HideItem4" for="openDialog9">Language </label></a>
+<div id="hourTabs" class="hour-tabs">
+<button type="button" class="hour-tab" data-hour="1" onclick="goToHour(1)">H1</button>
+<button type="button" class="hour-tab" data-hour="2" onclick="goToHour(2)">H2</button>
+<button type="button" class="hour-tab" data-hour="3" onclick="goToHour(3)">H3</button>
+<button type="button" class="hour-tab" data-hour="4" onclick="goToHour(4)">H4</button>
+<button type="button" class="hour-tab" data-hour="5" onclick="goToHour(5)">H5</button>
+<button type="button" class="hour-tab" data-hour="6" onclick="goToHour(6)">H6</button>
+<button type="button" class="hour-tab" data-hour="7" onclick="goToHour(7)">H7</button>
+<button type="button" class="hour-tab" data-hour="8" onclick="goToHour(8)">H8</button>
+</div>
 
-            <a href="javascript:void(0)"
-				onclick="location.reload()"> <i class="fa-solid fa-rotate">&nbsp;</i><div id="HideItem5">REFRECH</div></a>
+<button id="nextHourButton" type="button" class="hour-nav-arrow" onclick="navigateHour(1)" aria-label="Next hour">
+<i class="fa-solid fa-chevron-right"></i>
+</button>
+</div>
 
-			<a href="Login.aspx" 
-                onclick="ChangeMode()"> <i id="signOut"  class="fa-solid fa-person-through-window">&nbsp;</i><label id="HideItem6" >Sign out</label></a>
-            <a href="javascript:void(0)" 
-                onclick="ChangeMode()"> <i id="updateelement"  class="fa-solid fa-person-through-window">&nbsp;</i></a></div>
-	</div>
-	
-	<div id="contentArea"  >
-		
-			 <Tooltip title="Menu" arrow><span style="cursor: pointer; position: fixed; margin-top:  153px;"
-			class="closeBtn" id="closeBtn" onclick="closeNav()"><i class="fa-solid fa-xmark" style="font-size: 47px; color: #ffffff;"></i></span></Tooltip>
-			
-			
-		
-		
-		
-		
-		<div class="contentAreaCloseNav" onclick="closeNav()">
-		<div class="contentText">
-		<h5>
-		<div>
-		<table style="width:90%;" runat="server">
-  <tr>
-    <td class="auto-style1">
-        <asp:Label ID="TeamLabel" runat="server" Text="Team"></asp:Label>
+<div class="modal-body">
+<div class="grid">
+<div class="field"><label for="modalActual" data-i18n="modal.actualQuantity">Actual quantity</label><input id="modalActual" class="input" type="number" min="0" step="1" placeholder="0" /></div>
+<div class="field"><label for="modalScrap" data-i18n="modal.scrapQuantity">Scrap quantity</label><input id="modalScrap" class="input" type="number" min="0" step="1" placeholder="0" /></div>
+<div class="field full"><label for="modalComment" data-i18n="table.comments">Comments</label><textarea id="modalComment" class="input" maxlength="1000" placeholder="Describe a stop, incident or observation..."></textarea></div>
+</div>
 
-    </td>  
-      <td class="auto-style1">
-        <asp:Label ID="ProductLabel" runat="server" Text="Product Name"></asp:Label>
+<div id="modalError" class="error"></div>
+<div id="modalSuccess" class="success"></div>
 
-    </td>
-    <td class="auto-style1">
-        <asp:Label ID="PLLabel" runat="server" Text="Production Line"></asp:Label>
+<div class="modal-actions">
+<span id="modalSavingIndicator"
+      class="modal-saving-indicator">
+    <i class="fa-solid fa-spinner"></i>
+    <span>Saving...</span>
+</span>
 
-    </td>
-  </tr>
-  <tr>
-    <td>
-        <asp:Label ID="ShiftLabel" runat="server" Text="Shift"></asp:Label></td>
-    <td>
-        <asp:Label ID="DateLabel" runat="server" Text="Date"></asp:Label></td>
-      <td> 
-          <asp:Label ID="lblCOUCOU" runat="server" Text="coucou"></asp:Label>&nbsp;
-          <asp:Button ID="btnUpdate" runat="server" OnClick="btnUpdate_Click" Text="Update btn" />
-          <asp:Button ID="BTN2" runat="server" Text="Button 2" OnClick="BTN2_Click" />
-      </td>
-  </tr>    
-</table>
+<button id="saveHourButton"
+        type="button"
+        class="btn save-stay"
+        onclick="saveHourUpdates(false)"
+        data-i18n="common.save">
+    Save
+</button>
 
+<button id="saveAndCloseHourButton"
+        type="button"
+        class="btn save"
+        onclick="saveHourUpdates(true)"
+        data-i18n="common.saveClose">
+    Save &amp; Close
+</button>
 </div>
-		
-		
-		</h5>
-	
-			<table style="width:90%; margin-top:  -25px;  ">
-        <tr>
-            <th style="width:0%; background-color: none;color:white">
-                <div class="timeIcon">
-                   <i class="fa-solid fa-clock-rotate-left" alt="3Shifts" class="center"></i> 
-                </div>
-            </th>
+</div>
+</dialog>
+</form>
+<script src="Scripts/app-language.js"></script>
+<script>
+(function () {
+    "use strict";
 
-            <th class="custom-row" style="width:0%;background-color: #6AABD2; text-align: center; background: linear-gradient(to top right, transparent calc(50% - 1px), White, transparent calc(50% + 1px)); background-color: #6AABD2;">
-                <div class="dbox">
-                    <div class="dheading_tr" style="color:white;top: -6px;">Objet</div>
-                    <div class="dheading_bl"style="color:white; bottom: -6px;">Cumul</div>
-                </div>
-            </th>
+    var activeHour = 0;
+    var drafts = {};
+    var dirtyHours = {};
 
-            <th class="custom-row" style="width:0%;background-color: #6AABD2; text-align: center; background: linear-gradient(to top right, transparent calc(50% - 1px), White, transparent calc(50% + 1px)); background-color: #6AABD2;">
-                <div class="dbox">
-                    <div class="dheading_tr"style="color:white; top: -6px;">Reel</div>
-                    <div class="dheading_bl"style="color:white; bottom: -6px;">Cumul</div>
-                </div>
-            </th>
-            <th class="custom-row" style="width:0%;background-color: #6AABD2; text-align: center; background: linear-gradient(to top right, transparent calc(50% - 1px), White, transparent calc(50% + 1px)); background-color: #6AABD2;">
+    var modal = document.getElementById("hourModal");
+    var title = document.getElementById("modalTitle");
+    var actual = document.getElementById("modalActual");
+    var scrap = document.getElementById("modalScrap");
+    var comment = document.getElementById("modalComment");
+    var error = document.getElementById("modalError");
+    var success = document.getElementById("modalSuccess");
+    var previousButton = document.getElementById("previousHourButton");
+    var nextButton = document.getElementById("nextHourButton");
+    var boardInfoDialog = document.getElementById("boardInfoDialog");
+    var productionTimeline = document.getElementById("productionTimeline");
+    var saveHourButton = document.getElementById("saveHourButton");
+    var saveAndCloseHourButton = document.getElementById("saveAndCloseHourButton");
+    var modalSavingIndicator = document.getElementById("modalSavingIndicator");
+    var saveInProgress = false;
 
-                <div class="dbox">
-				
-                    <div class="dheading_tr"style="color:white; top: -6px;">Rebut</div>
-                    <div class="dheading_bl"style="color:white; bottom: -6px;">Cumul</div>
-                </div>
-            </th>
-            <th style="width:80%; height:50px; background-color: #6AABD2;color:white" >Commentaires</th>
-        </tr>
-  
-  <tr>
-<td style="height:10px">
-    <div class="round" >
-        <asp:Label ID="h1Label" runat="server" Text="1st h"></asp:Label>
-         </div>
-</td>
-	
-	
-         <td style="width:0%">
-    <div class="dbox">
-    <div class="dheading_tr">
-        <asp:Label ID="h1Object" runat="server" Text="Obj1"></asp:Label></div>
-    <div class="dheading_bl"><asp:Label ID="OBJ_CML1" runat="server" Text="Cml1"></asp:Label></div>
-</div>
-  </td>
-  
-         <td style="width:0%">
-    <div class="dbox">
-    
-    <div class="dheading_tr" > <asp:Label runat="server" id="reel_h1" for="openDialog" Text="&emsp;"></asp:Label>
-    </div>
-    <div class="dheading_bl"><label id= "cumul_h1" for="openDialog">&emsp;</label></div>
-</div>
-  </td>
-  
-         <td style="width:0%">
-    <div class="dbox">
-    <div class="dheading_tr"><label id= "rubut_h1" for="openDialog">0</label></div>
-    <div class="dheading_bl"><label id= "cumulrubut_h1"for="openDialog" >0 </label></div>
-</div>
-  </td>
-  
-  
-   <td class= "Commentaire"><label id= "Commentaire_h1" for="openDialog" >&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;
-   &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;</label></td>
-  </tr>
-  <tr>
-    <td ><div class="round" >
-        <asp:Label ID="h2Label" runat="server" Text="2nd h"></asp:Label>
-    </div></td>
-    
-	 <td style="width:0%">
-    <div class="dbox">
-    <div class="dheading_tr"><asp:Label ID="h2Object" runat="server" Text="Obj2"></asp:Label></div>
-    <div class="dheading_bl"><asp:Label ID="OBJ_CML2" runat="server" Text="Cml2"></asp:Label></div>
-</div>
-  </td>
-	
-     <td style="width:0%"> 
-    <div class="dbox">
-    <div class="dheading_tr"><label id= "reel_h2" for="openDialog2">00 </label> </div>
-    <div class="dheading_bl"><label id= "cumul_h2" for="openDialog2"> 00 </label></div>
-</div>
-  </td>
-    
-	 <td style="width:0%">
-    <div class="dbox">
-        <div class="dheading_tr"><label id= "rubut_h2" for="openDialog2">00</label></div>
-    <div class="dheading_bl"><label id= "cumulrubut_h2" for="openDialog2" > 00 </label></div>
-</div>
-  </td>
-	
-     <td class= "Commentaire"><label id= "Commentaire_h2" for="openDialog2">&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;
-   &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;</label></td>
-  </tr>
-  <tr>
-    <td ><div class="round" >
-                <asp:Label ID="h3Label" runat="server" Text="3rd h"></asp:Label>
+    var translations = {
+        en: {
+            "document.title": "Production Board",
+            "nav.productionBoard": "Production Board",
+            "nav.boardInfo": "Board information",
+            "nav.previousTeam": "Previous team",
+            "nav.nextTeam": "Next team",
+            "nav.weekly": "Weekly Synthesis",
+            "nav.findBoard": "Find a board",
+            "nav.changeBoard": "Change board",
+            "nav.signOut": "Sign out",
+            "nav.language": "Language",
+            "page.title": "Production Board",
+            "page.subtitle": "Use the animated arrows in the navigation bar to move between team boards.",
+            "page.boardTitle": "Production Board",
+            "info.date": "Date",
+            "info.shift": "Shift",
+            "info.team": "Team",
+            "info.product": "Product",
+            "info.line": "Line",
+            "table.target": "Target",
+            "table.cumulative": "Cumulative",
+            "table.actual": "Actual",
+            "table.scrap": "Scrap",
+            "table.comments": "Comments",
+            "table.update": "Update",
+            "timeline.title": "Shift timeline",
+            "timeline.pending": "Pending",
+            "timeline.actual": "Actual",
+            "timeline.scrap": "Scrap",
+            "boardInfo.title": "Production board information",
+            "boardInfo.subtitle": "Current production board information.",
+            "boardInfo.id": "Board ID",
+            "boardInfo.productionLine": "Production line",
+            "boardInfo.accessMode": "Access mode",
+            "boardInfo.editable": "Editable board",
+            "boardInfo.readOnly": "Read-only board",
+            "modal.title": "Update production hour",
+            "modal.subtitle": "Move between H1 and H8 without closing the modal.",
+            "modal.actualQuantity": "Actual quantity",
+            "modal.scrapQuantity": "Scrap quantity",
+            "modal.commentPlaceholder": "Describe a stop, incident or observation...",
+            "modal.noHour": "No production hour is selected.",
+            "modal.invalidActual": "Actual quantity must be a whole number equal to or greater than zero.",
+            "modal.invalidScrap": "Scrap quantity must be a whole number equal to or greater than zero.",
+            "modal.saved": "Changes were saved to the database. You can continue through the other hours.",
+            "modal.saveError": "The production data could not be saved to the database.",
+            "common.close": "Close",
+            "common.save": "Save",
+            "common.saveClose": "Save & Close"
+        },
+        fr: {
+            "document.title": "Tableau de marche",
+            "nav.productionBoard": "Tableau de marche",
+            "nav.boardInfo": "Informations du tableau",
+            "nav.previousTeam": "\u00C9quipe pr\u00E9c\u00E9dente",
+            "nav.nextTeam": "\u00C9quipe suivante",
+            "nav.weekly": "Synth\u00E8se hebdomadaire",
+            "nav.findBoard": "Rechercher un tableau",
+            "nav.changeBoard": "Changer de tableau",
+            "nav.signOut": "D\u00E9connexion",
+            "nav.language": "Langue",
+            "page.title": "Tableau de marche",
+            "page.subtitle": "Utilisez les fl\u00E8ches anim\u00E9es dans la barre de navigation pour passer entre les tableaux des \u00E9quipes.",
+            "page.boardTitle": "Tableau de marche",
+            "info.date": "Date",
+            "info.shift": "Poste",
+            "info.team": "\u00C9quipe",
+            "info.product": "Produit",
+            "info.line": "Ligne",
+            "table.target": "Objectif",
+            "table.cumulative": "Cumul",
+            "table.actual": "R\u00E9el",
+            "table.scrap": "Rebut",
+            "table.comments": "Commentaires",
+            "table.update": "Modifier",
+            "timeline.title": "Chronologie du poste",
+            "timeline.pending": "En attente",
+            "timeline.actual": "R\u00E9el",
+            "timeline.scrap": "Rebut",
+            "boardInfo.title": "Informations du tableau de marche",
+            "boardInfo.subtitle": "Informations du tableau de production actuel.",
+            "boardInfo.id": "ID du tableau",
+            "boardInfo.productionLine": "Ligne de production",
+            "boardInfo.accessMode": "Mode d\u2019acc\u00E8s",
+            "boardInfo.editable": "Tableau modifiable",
+            "boardInfo.readOnly": "Tableau en lecture seule",
+            "modal.title": "Mise \u00E0 jour de l\u2019heure de production",
+            "modal.subtitle": "Passez de H1 \u00E0 H8 sans fermer la fen\u00EAtre.",
+            "modal.actualQuantity": "Quantit\u00E9 r\u00E9elle",
+            "modal.scrapQuantity": "Quantit\u00E9 rebut",
+            "modal.commentPlaceholder": "D\u00E9crivez un arr\u00EAt, un incident ou une observation...",
+            "modal.noHour": "Aucune heure de production n\u2019est s\u00E9lectionn\u00E9e.",
+            "modal.invalidActual": "La quantit\u00E9 r\u00E9elle doit \u00EAtre un nombre entier sup\u00E9rieur ou \u00E9gal \u00E0 z\u00E9ro.",
+            "modal.invalidScrap": "La quantit\u00E9 rebut doit \u00EAtre un nombre entier sup\u00E9rieur ou \u00E9gal \u00E0 z\u00E9ro.",
+            "modal.saved": "Les modifications ont \u00E9t\u00E9 enregistr\u00E9es dans la base de donn\u00E9es. Vous pouvez continuer avec les autres heures.",
+            "modal.saveError": "Les donn\u00E9es de production n\u2019ont pas pu \u00EAtre enregistr\u00E9es dans la base de donn\u00E9es.",
+            "common.close": "Fermer",
+            "common.save": "Enregistrer",
+            "common.saveClose": "Enregistrer et fermer"
+        }
+    };
 
-    </div></td>
-	
-	
-    <td style="width:0%">
-    <div class="dbox">
-    <div class="dheading_tr"><asp:Label ID="h3Object" runat="server" Text="Obj3"></asp:Label></div>
-    <div class="dheading_bl"><asp:Label ID="OBJ_CML3" runat="server" Text="Cml3"></asp:Label></div>
-</div>
-  </td>
-	
-	
-     <td style="width:0%">
-    <div class="dbox">
-    <div class="dheading_tr"><label id= "reel_h3" for="openDialog3">0</label> </div>
-    <div class="dheading_bl"><label id= "cumul_h3" for="openDialog3"  >0</label></div>
-</div>
-  </td>
-	
-	
-     <td style="width:0%">
-    <div class="dbox">
-    <div class="dheading_tr"><label id= "rubut_h3" for="openDialog3">0</label></div>
-    <div class="dheading_bl"><label id= "cumulrubut_h3" for="openDialog3"> 0</label></div>
-</div>
-  </td>
-	
-	
-    <td class= "Commentaire"><label id= "Commentaire_h3" for="openDialog3">&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;
-   &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;</label></td>
-  </tr>
-  
-  
-  <tr>
-    <td ><div class="round" >
-    <asp:Label ID="h4Label" runat="server" Text="4th h"></asp:Label>
+    var currentLanguage =
+        readStoredLanguage();
 
-    </div></td>
- <td style="width:0%">
-    <div class="dbox">
-    <div class="dheading_tr"><asp:Label ID="h4Object" runat="server" Text="Obj4"></asp:Label></div>
-    <div class="dheading_bl"><asp:Label ID="OBJ_CML4" runat="server" Text="Cml4"></asp:Label></div>
-</div>
-  </td>
+    function readStoredLanguage() {
+        try {
+            var storedLanguage =
+                window.localStorage.getItem(
+                    "productionBoardLanguage"
+                );
 
-  
-   <td style="width:0%">
-    <div class="dbox">
-    <div class="dheading_tr"><label id= "reel_h4" for="openDialog4">00</label> </div>
-    <div class="dheading_bl"><label id= "cumul_h4" for="openDialog4">00</label></div>
-</div>
-  </td>
-  
-   <td style="width:0%">
-    <div class="dbox">
-        <div class="dheading_tr"><label id= "rubut_h4" for="openDialog4">00</label></div>
-    <div class="dheading_bl"><label id= "cumulrubut_h4" for="openDialog4"> 00 </label></div>
-</div>
-  </td>
-  
-    <td class= "Commentaire"><label id= "Commentaire_h4" for="openDialog4">&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;
-   &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;</label></td>
-  </tr>
-  <tr>
-    <td ><div class="round" >
-    <asp:Label ID="h5Label" runat="server" Text="5th h"></asp:Label>
+            return storedLanguage === "fr"
+                ? "fr"
+                : "en";
+        } catch (exception) {
+            return "en";
+        }
+    }
 
-    </div></td>
-	
-	<td style="width:0%">
-    <div class="dbox">
-    <div class="dheading_tr"><asp:Label ID="h5Object" runat="server" Text="Obj5"></asp:Label></div>
-    <div class="dheading_bl"><asp:Label ID="OBJ_CML5" runat="server" Text="Cml5"></asp:Label></div>
-</div>
-  </td>
-	
-	<td style="width:0%">
-    <div class="dbox">
-    <div class="dheading_tr"><label id= "reel_h5" for="openDialog5">00</label> </div>
-    <div class="dheading_bl"><label id= "cumul_h5" for="openDialog5">00</label></div>
-</div>
-  </td>
-	
-    <td style="width:0%">
-    <div class="dbox">
-    <div class="dheading_tr"><label id= "rubut_h5" for="openDialog5">00</label></div>
-    <div class="dheading_bl"><label id= "cumulrubut_h5" for="openDialog5"> 00 </label></div>
-</div>
-  </td>
-	
-       <td class= "Commentaire"><label id= "Commentaire_h5" for="openDialog5">&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;
-   &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;</label></td>
-  </tr>
-  <tr>
-<td ><div class="round" >
-    <asp:Label ID="h6Label" runat="server" Text="6th h"></asp:Label>
-    </div></td>	
-	<td style="width:0%">
-    <div class="dbox">
-    <div class="dheading_tr"><asp:Label ID="h6Object" runat="server" Text="Obj6"></asp:Label></div>
-    <div class="dheading_bl"><asp:Label ID="OBJ_CML6" runat="server" Text="Cml6"></asp:Label></div>
-</div>
-  </td>
-	
-	<td style="width:0%">
-    <div class="dbox">
-    <div class="dheading_tr"><label id= "reel_h6" for="openDialog6">00</label> </div>
-    <div class="dheading_bl"><label id= "cumul_h6" for="openDialog6">00</label></div>
-</div>
-  </td>
-	
-    <td style="width:0%">
-    <div class="dbox">
-    <div class="dheading_tr"><label id= "rubut_h6" for="openDialog6">00</label></div>
-    <div class="dheading_bl"><label id= "cumulrubut_h6" for="openDialog6"> 00 </label></div>
-</div>
-  </td>
-	
-    <td class= "Commentaire"><label id= "Commentaire_h6" for="openDialog6">&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;
-   &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;</label></td>
-  </tr>
-  
-<tr>
-<td ><div class="round" >
-    <asp:Label ID="h7Label" runat="server" Text="7th h"></asp:Label>
-    </div></td>	
-	<td style="width:0%">
-    <div class="dbox">
-    <div class="dheading_tr"><asp:Label ID="h7Object" runat="server" Text="Obj7"></asp:Label></div>
-    <div class="dheading_bl"><asp:Label ID="OBJ_CML7" runat="server" Text="Cml7"></asp:Label></div>
-</div>
-  </td>
-	
-	<td style="width:0%">
-    <div class="dbox">
-    <div class="dheading_tr"><label id= "reel_h7" for="openDialog7">00</label> </div>
-    <div class="dheading_bl"><label id= "cumul_h7" for="openDialog7">00</label></div>
-</div>
-  </td>
-	
-    <td style="width:0%">
-    <div class="dbox">
-    <div class="dheading_tr"><label id= "rubut_h7" for="openDialog7">00</label></div>
-    <div class="dheading_bl"><label id= "cumulrubut_h7" for="openDialog7"> 00 </label></div>
-</div>
-  </td>
-	
-       <td class= "Commentaire"><label id= "Commentaire_h7" for="openDialog7">&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;
-   &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;</label></td>
-  </tr>
-  <tr>
-<td ><div class="round" >
-    <asp:Label ID="h8Label" runat="server" Text="8th h"></asp:Label>
-    </div></td>	
-	<td style="width:0%">
-    <div class="dbox">
-    <div class="dheading_tr"><asp:Label ID="h8Object" runat="server" Text="Obj8"></asp:Label></div>
-    <div class="dheading_bl"><asp:Label ID="OBJ_CML8" runat="server" Text="Cml8"></asp:Label></div>
-</div>
-  </td>
-	
-	<td style="width:0%">
-    <div class="dbox">
-    <div class="dheading_tr"><label id= "reel_h8" for="openDialog8">0</label> </div>
-    <div class="dheading_bl"><label id= "cumul_h8" for="openDialog8" >0</label></div>
-</div>
-  </td>
-	
-    <td style="width:0%">
-    <div class="dbox">
-    <div class="dheading_tr"><label id= "rubut_h8" for="openDialog8">0</label></div>
-    <div class="dheading_bl"><label id= "cumulrubut_h8" for="openDialog8"> 0 </label></div>
-</div>
-  </td>
-	
-        <td class= "Commentaire"><label id= "Commentaire_h8" for="openDialog8">&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;
-   &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;</label></td>
-  </tr>
-</table>
+    function storeLanguage(language) {
+        try {
+            window.localStorage.setItem(
+                "productionBoardLanguage",
+                language
+            );
+        } catch (exception) {
+            /*
+             * The page still works when browser storage is unavailable.
+             */
+        }
+    }
 
+    function t(key) {
+        var languageDictionary =
+            translations[currentLanguage] ||
+            translations.en;
 
+        return languageDictionary[key] ||
+            translations.en[key] ||
+            key;
+    }
 
+    function applyLanguage() {
+        document.documentElement.lang =
+            currentLanguage;
 
-		</div>
-	</div>
-	</div>
-    </form>
+        document.title =
+            t("document.title");
 
-     <script src="JavaScript.js"></script>
-</body>
-</html>
+        var translatedElements =
+            document.querySelectorAll(
+                "[data-i18n]"
+            );
+
+        for (var index = 0;
+             index < translatedElements.length;
+             index++) {
+
+            var element =
+                translatedElements[index];
+
+            var key =
+                element.getAttribute(
+                    "data-i18n"
+                );
+
+            element.textContent =
+                t(key);
+        }
+
+        var languageText =
+            document.getElementById(
+                "languageNavText"
+            );
+
+        if (languageText) {
+            languageText.textContent =
+                t("nav.language") +
+                " \u00B7 " +
+                currentLanguage.toUpperCase();
+        }
+
+        if (comment) {
+            comment.placeholder =
+                t("modal.commentPlaceholder");
+        }
+
+        if (activeHour > 0) {
+            loadHourIntoModal(activeHour);
+        }
+
+        renderProductionTimeline(
+            readTimelineHoursFromBoard()
+        );
+    }
+
+    /*
+     * The shared app-language.js file owns the language selector modal.
+     * This page listens for the global change event so its timeline,
+     * dynamic modal titles and validation messages also update.
+     */
+    window.toggleLanguage = function () {
+        if (window.AppLanguage) {
+            window.AppLanguage.openModal();
+        }
+    };
+
+    window.addEventListener(
+        "appLanguageChanged",
+        function (event) {
+            if (!event.detail ||
+                !event.detail.language) {
+                return;
+            }
+
+            currentLanguage =
+                event.detail.language;
+
+            applyLanguage();
+        }
+    );
+
+    var canEditField =
+        document.getElementById(
+            "CanEditProductionBoardHiddenField"
+        );
+
+    var canEdit =
+        canEditField !== null &&
+        canEditField.value === "true";
+
+    if (!canEdit) {
+        document.body.classList.add("read-only");
+    }
+
+    window.toggleMenu = function () {
+        document.getElementById("side").classList.toggle("open");
+        document.getElementById("page").classList.toggle("open");
+    };
+
+    window.openBoardInfo = function () {
+        setInfoValue("infoBoardId", getElementValue("CurrentBoardIdHiddenField"));
+        setInfoValue("infoDate", getElementValue("DateLabel"));
+        setInfoValue("infoTeam", getElementValue("TeamLabel"));
+        setInfoValue("infoShift", getElementValue("ShiftLabel"));
+        setInfoValue("infoProduct", getElementValue("ProductLabel"));
+        setInfoValue("infoLine", getElementValue("PLLabel"));
+        setInfoValue(
+            "infoAccessMode",
+            canEdit
+                ? t("boardInfo.editable")
+                : t("boardInfo.readOnly")
+        );
+
+        if (typeof boardInfoDialog.showModal === "function") {
+            boardInfoDialog.showModal();
+        } else {
+            boardInfoDialog.setAttribute("open", "open");
+        }
+    };
+
+    window.closeBoardInfo = function () {
+        if (typeof boardInfoDialog.close === "function") {
+            boardInfoDialog.close();
+        } else {
+            boardInfoDialog.removeAttribute("open");
+        }
+    };
+
+    function getElementValue(elementId) {
+        var element = document.getElementById(elementId);
+
+        if (!element) {
+            return "\u2014";
+        }
+
+        var value = "value" in element
+            ? element.value
+            : element.textContent;
+
+        value = String(value || "").trim();
+
+        return value || "\u2014";
+    }
+
+    function setInfoValue(elementId, value) {
+        var element = document.getElementById(elementId);
+
+        if (element) {
+            element.textContent = value || "\u2014";
+        }
+    }
+
+    function getHourPerformanceStatus(
+        targetQuantity,
+        actualQuantity,
+        scrapQuantity) {
+
+        var targetValue =
+            Math.max(0, Number(targetQuantity || 0));
+
+        var actualValue =
+            Math.max(0, Number(actualQuantity || 0));
+
+        var scrapValue =
+            Math.max(0, Number(scrapQuantity || 0));
+
+        /*
+         * Pending:
+         * No production and no scrap have been entered yet.
+         */
+        if (actualValue === 0 && scrapValue === 0) {
+            return {
+                name: "pending",
+                ratio: targetValue > 0
+                    ? 0
+                    : null
+            };
+        }
+
+        /*
+         * Any scrap marks the hour red.
+         */
+        if (scrapValue > 0) {
+            return {
+                name: "red",
+                ratio: targetValue > 0
+                    ? actualValue / targetValue
+                    : null
+            };
+        }
+
+        /*
+         * When no target exists, a positive actual value is considered green.
+         */
+        if (targetValue <= 0) {
+            return {
+                name: actualValue > 0
+                    ? "green"
+                    : "pending",
+                ratio: null
+            };
+        }
+
+        var ratio =
+            actualValue / targetValue;
+
+        if (ratio >= 1) {
+            return {
+                name: "green",
+                ratio: ratio
+            };
+        }
+
+        if (ratio >= 0.90) {
+            return {
+                name: "yellow",
+                ratio: ratio
+            };
+        }
+
+        if (ratio >= 0.50) {
+            return {
+                name: "orange",
+                ratio: ratio
+            };
+        }
+
+        return {
+            name: "red",
+            ratio: ratio
+        };
+    }
+
+    function getPerformanceDetail(
+        status,
+        targetQuantity,
+        actualQuantity,
+        scrapQuantity) {
+
+        var targetValue =
+            Math.max(0, Number(targetQuantity || 0));
+
+        var actualValue =
+            Math.max(0, Number(actualQuantity || 0));
+
+        var scrapValue =
+            Math.max(0, Number(scrapQuantity || 0));
+
+        if (status.name === "pending") {
+            return t("timeline.pending");
+        }
+
+        if (scrapValue > 0) {
+            return t("timeline.scrap") +
+                " " +
+                scrapValue;
+        }
+
+        if (targetValue <= 0) {
+            return t("timeline.actual") +
+                " " +
+                actualValue;
+        }
+
+        var percentage =
+            Math.round(
+                (status.ratio || 0) * 100
+            );
+
+        return percentage +
+            "% \u00B7 " +
+            actualValue +
+            "/" +
+            targetValue;
+    }
+
+    function applyHourPerformanceColors() {
+        for (var hourNumber = 1;
+             hourNumber <= 8;
+             hourNumber++) {
+
+            var row =
+                document.getElementById(
+                    "hourRow" + hourNumber
+                );
+
+            if (!row) {
+                continue;
+            }
+
+            var targetQuantity =
+                read(
+                    document.getElementById(
+                        "h" + hourNumber + "Object"
+                    )
+                );
+
+            var actualQuantity =
+                read(
+                    document.getElementById(
+                        "reel_h" + hourNumber
+                    )
+                );
+
+            var scrapQuantity =
+                read(
+                    document.getElementById(
+                        "rubut_h" + hourNumber
+                    )
+                );
+
+            var status =
+                getHourPerformanceStatus(
+                    targetQuantity,
+                    actualQuantity,
+                    scrapQuantity
+                );
+
+            row.classList.remove(
+                "status-pending",
+                "status-green",
+                "status-yellow",
+                "status-orange",
+                "status-red"
+            );
+
+            row.classList.add(
+                "status-" + status.name
+            );
+
+            row.setAttribute(
+                "data-performance-status",
+                status.name
+            );
+        }
+    }
+
+    window.renderProductionTimeline = function (hours) {
+        if (!productionTimeline) {
+            return;
+        }
+
+        productionTimeline.innerHTML = "";
+
+        var items =
+            Array.isArray(hours)
+                ? hours
+                : readTimelineHoursFromBoard();
+
+        for (var index = 0;
+             index < 8;
+             index++) {
+
+            var hour =
+                items[index] || {
+                    hourNumber: index + 1,
+                    hourLabel: "H" + (index + 1),
+                    targetQuantity: 0,
+                    actualQuantity: 0,
+                    scrapQuantity: 0,
+                    comment: ""
+                };
+
+            var hourNumber =
+                Number(hour.hourNumber || (index + 1));
+
+            var targetQuantity =
+                hour.targetQuantity !== undefined
+                    ? Number(hour.targetQuantity || 0)
+                    : read(
+                        document.getElementById(
+                            "h" + hourNumber + "Object"
+                        )
+                    );
+
+            var actualValue =
+                Number(hour.actualQuantity || 0);
+
+            var scrapValue =
+                Number(hour.scrapQuantity || 0);
+
+            var status =
+                getHourPerformanceStatus(
+                    targetQuantity,
+                    actualValue,
+                    scrapValue
+                );
+
+            var item =
+                document.createElement("div");
+
+            item.className =
+                "timeline-item performance-" +
+                status.name;
+
+            var marker =
+                document.createElement("span");
+
+            marker.className =
+                "timeline-marker";
+
+            var content =
+                document.createElement("span");
+
+            content.className =
+                "timeline-content";
+
+            var time =
+                document.createElement("span");
+
+            time.className =
+                "timeline-time";
+
+            time.textContent =
+                hour.hourLabel ||
+                ("H" + (index + 1));
+
+            var detail =
+                document.createElement("span");
+
+            detail.className =
+                "timeline-detail";
+
+            detail.textContent =
+                getPerformanceDetail(
+                    status,
+                    targetQuantity,
+                    actualValue,
+                    scrapValue
+                );
+
+            content.appendChild(time);
+            content.appendChild(detail);
+            item.appendChild(marker);
+            item.appendChild(content);
+            productionTimeline.appendChild(item);
+        }
+
+        applyHourPerformanceColors();
+    };
+
+    function readTimelineHoursFromBoard() {
+        var hours = [];
+
+        for (var hourNumber = 1; hourNumber <= 8; hourNumber++) {
+            var timeElement = document.getElementById("h" + hourNumber + "Label");
+            var commentElement = document.getElementById("Commentaire_h" + hourNumber);
+
+            hours.push({
+                hourNumber: hourNumber,
+                hourLabel: timeElement
+                    ? String(timeElement.textContent || "").trim()
+                    : "H" + hourNumber,
+                targetQuantity: read(
+                    document.getElementById(
+                        "h" + hourNumber + "Object"
+                    )
+                ),
+                actualQuantity: read(
+                    document.getElementById(
+                        "reel_h" + hourNumber
+                    )
+                ),
+                scrapQuantity: read(
+                    document.getElementById(
+                        "rubut_h" + hourNumber
+                    )
+                ),
+                comment: commentElement
+                    ? String(commentElement.textContent || "").trim()
+                    : ""
+            });
+        }
+
+        return hours;
+    }
+
+    window.openHourModal = function (hourNumber) {
+        if (!canEdit) {
+            return;
+        }
+
+        drafts = {};
+        dirtyHours = {};
+
+        for (var number = 1; number <= 8; number++) {
+            drafts[number] = readHourFromBoard(number);
+        }
+
+        activeHour = hourNumber;
+        loadHourIntoModal(activeHour);
+        updateNavigation();
+
+        hideMessages();
+
+        if (typeof modal.showModal === "function") {
+            modal.showModal();
+        } else {
+            modal.setAttribute("open", "open");
+        }
+
+        window.setTimeout(function () {
+            actual.focus();
+            actual.select();
+        }, 25);
+    };
+
+    window.goToHour = function (hourNumber) {
+        if (hourNumber < 1 || hourNumber > 8 || hourNumber === activeHour) {
+            return;
+        }
+
+        if (!storeActiveHourDraft()) {
+            return;
+        }
+
+        activeHour = hourNumber;
+        loadHourIntoModal(activeHour);
+        updateNavigation();
+        hideMessages();
+
+        actual.focus();
+        actual.select();
+    };
+
+    window.navigateHour = function (direction) {
+        var targetHour = activeHour + direction;
+
+        if (targetHour < 1 || targetHour > 8) {
+            return;
+        }
+
+        window.goToHour(targetHour);
+    };
+
+    window.closeHourModal = function () {
+        if (saveInProgress) {
+            return;
+        }
+
+        hideMessages();
+
+        if (typeof modal.close === "function") {
+            modal.close();
+        } else {
+            modal.removeAttribute("open");
+        }
+
+        activeHour = 0;
+        drafts = {};
+        dirtyHours = {};
+    };
+
+    window.saveHourUpdates = function (closeAfterSave) {
+        if (saveInProgress) {
+            return;
+        }
+
+        hideMessages();
+
+        if (!storeActiveHourDraft()) {
+            return;
+        }
+
+        var saveRequest =
+            buildProductionHoursSaveRequest();
+
+        if (!saveRequest) {
+            showError(
+                t("modal.saveError")
+            );
+
+            return;
+        }
+
+        setSavingState(true);
+
+        saveProductionHoursToServer(
+            saveRequest
+        )
+            .then(function (result) {
+                if (!result ||
+                    result.Success !== true) {
+                    throw new Error(
+                        result && result.Message
+                            ? result.Message
+                            : t("modal.saveError")
+                    );
+                }
+
+                applyDraftsToBoard();
+                recalculateCumulativeValues();
+                renderProductionTimeline(
+                    readTimelineHoursFromBoard()
+                );
+                applyHourPerformanceColors();
+
+                window.productionBoardHours =
+                    readTimelineHoursFromBoard();
+
+                dirtyHours = {};
+                updateNavigation();
+
+                if (closeAfterSave) {
+                    setSavingState(false);
+                    closeHourModal();
+                    return;
+                }
+
+                showSuccess(
+                    t("modal.saved")
+                );
+            })
+            .catch(function (saveError) {
+                showError(
+                    saveError && saveError.message
+                        ? saveError.message
+                        : t("modal.saveError")
+                );
+            })
+            .then(function () {
+                setSavingState(false);
+            });
+    };
+
+    function buildProductionHoursSaveRequest() {
+        var boardIdElement =
+            document.getElementById(
+                "CurrentBoardIdHiddenField"
+            );
+
+        var boardId =
+            boardIdElement
+                ? parseInt(
+                    boardIdElement.value,
+                    10
+                )
+                : 0;
+
+        if (!Number.isFinite(boardId) ||
+            boardId <= 0) {
+            return null;
+        }
+
+        var hours = [];
+
+        for (var hourNumber = 1;
+             hourNumber <= 8;
+             hourNumber++) {
+
+            var draft =
+                drafts[hourNumber] ||
+                readHourFromBoard(
+                    hourNumber
+                );
+
+            hours.push({
+                HourNumber:
+                    hourNumber,
+
+                ActualQuantity:
+                    Number(draft.actual || 0),
+
+                ScrapQuantity:
+                    Number(draft.scrap || 0),
+
+                Comment:
+                    String(draft.comment || "")
+                        .trim()
+            });
+        }
+
+        return {
+            BoardId:
+                boardId,
+
+            Hours:
+                hours
+        };
+    }
+
+    function saveProductionHoursToServer(
+        request) {
+
+        var endpoint =
+            window.location.pathname +
+            "/SaveProductionHours";
+
+        return window.fetch(
+            endpoint,
+            {
+                method: "POST",
+                credentials: "same-origin",
+                headers: {
+                    "Content-Type":
+                        "application/json; charset=utf-8",
+
+                    "Accept":
+                        "application/json"
+                },
+                body: JSON.stringify({
+                    request: request
+                })
+            }
+        )
+            .then(function (response) {
+                return response.text()
+                    .then(function (responseText) {
+                        var payload = null;
+
+                        try {
+                            payload =
+                                responseText
+                                    ? JSON.parse(
+                                        responseText
+                                    )
+                                    : null;
+                        } catch (parseError) {
+                            payload = null;
+                        }
+
+                        if (!response.ok) {
+                            var serverMessage =
+                                payload && payload.Message
+                                    ? payload.Message
+                                    : t("modal.saveError");
+
+                            throw new Error(
+                                serverMessage
+                            );
+                        }
+
+                        var result =
+                            payload && payload.d !== undefined
+                                ? payload.d
+                                : payload;
+
+                        if (typeof result === "string") {
+                            try {
+                                result =
+                                    JSON.parse(result);
+                            } catch (parseResultError) {
+                                result = null;
+                            }
+                        }
+
+                        return result;
+                    });
+            });
+    }
+
+    function setSavingState(isSaving) {
+        saveInProgress =
+            isSaving === true;
+
+        if (saveHourButton) {
+            saveHourButton.disabled =
+                saveInProgress;
+        }
+
+        if (saveAndCloseHourButton) {
+            saveAndCloseHourButton.disabled =
+                saveInProgress;
+        }
+
+        if (previousButton) {
+            previousButton.disabled =
+                saveInProgress ||
+                activeHour <= 1;
+        }
+
+        if (nextButton) {
+            nextButton.disabled =
+                saveInProgress ||
+                activeHour >= 8;
+        }
+
+        if (modalSavingIndicator) {
+            modalSavingIndicator.classList.toggle(
+                "visible",
+                saveInProgress
+            );
+        }
+    }
+
+    /*
+     * Compatibility aliases for older modal calls.
+     */
+    window.saveAllHourUpdates = function () {
+        window.saveHourUpdates(true);
+    };
+
+    window.saveHourUpdate = function () {
+        window.saveHourUpdates(false);
+    };
+
+    function applyDraftsToBoard() {
+        for (var hourNumber = 1; hourNumber <= 8; hourNumber++) {
+            var draft = drafts[hourNumber];
+
+            set(
+                "reel_h" + hourNumber,
+                draft.actual
+            );
+
+            set(
+                "rubut_h" + hourNumber,
+                draft.scrap
+            );
+
+            set(
+                "Commentaire_h" + hourNumber,
+                draft.comment || "\u2014"
+            );
+        }
+    }
+
+    function readHourFromBoard(hourNumber) {
+        var commentElement =
+            document.getElementById("Commentaire_h" + hourNumber);
+
+        var commentText =
+            commentElement && commentElement.textContent
+                ? commentElement.textContent.trim()
+                : "";
+
+        return {
+            actual: read(
+                document.getElementById("reel_h" + hourNumber)
+            ),
+            scrap: read(
+                document.getElementById("rubut_h" + hourNumber)
+            ),
+            comment:
+                commentText === "\u2014" ||
+                commentText === "No comment"
+                    ? ""
+                    : commentText
+        };
+    }
+
+    function loadHourIntoModal(hourNumber) {
+        var draft = drafts[hourNumber];
+        var timeElement =
+            document.getElementById("h" + hourNumber + "Label");
+
+        var timeText =
+            timeElement && timeElement.textContent
+                ? timeElement.textContent.trim()
+                : "H" + hourNumber;
+
+        title.textContent =
+            t("modal.title") +
+            " \u00B7 H" +
+            hourNumber +
+            "/8 \u2014 " +
+            timeText;
+
+        actual.value = draft.actual;
+        scrap.value = draft.scrap;
+        comment.value = draft.comment;
+    }
+
+    function storeActiveHourDraft() {
+        if (activeHour < 1 || activeHour > 8) {
+            showError(t("modal.noHour"));
+            return false;
+        }
+
+        var actualValue = parseNonNegativeInteger(actual.value);
+        var scrapValue = parseNonNegativeInteger(scrap.value);
+
+        if (actualValue === null) {
+            showError(
+                t("modal.invalidActual")
+            );
+            actual.focus();
+            return false;
+        }
+
+        if (scrapValue === null) {
+            showError(
+                t("modal.invalidScrap")
+            );
+            scrap.focus();
+            return false;
+        }
+
+        var previousDraft = drafts[activeHour];
+        var newComment = comment.value.trim();
+
+        var hasChanged =
+            previousDraft.actual !== actualValue ||
+            previousDraft.scrap !== scrapValue ||
+            previousDraft.comment !== newComment;
+
+        drafts[activeHour] = {
+            actual: actualValue,
+            scrap: scrapValue,
+            comment: newComment
+        };
+
+        if (hasChanged) {
+            dirtyHours[activeHour] = true;
+        }
+
+        updateNavigation();
+        return true;
+    }
+
+    function updateNavigation() {
+        previousButton.disabled =
+            saveInProgress ||
+            activeHour <= 1;
+
+        nextButton.disabled =
+            saveInProgress ||
+            activeHour >= 8;
+
+        var tabs =
+            document.querySelectorAll(
+                "#hourTabs .hour-tab"
+            );
+
+        for (var index = 0; index < tabs.length; index++) {
+            var tab = tabs[index];
+            var tabHour =
+                parseInt(
+                    tab.getAttribute("data-hour"),
+                    10
+                );
+
+            tab.classList.toggle(
+                "active",
+                tabHour === activeHour
+            );
+
+            tab.classList.toggle(
+                "dirty",
+                dirtyHours[tabHour] === true
+            );
+
+            tab.setAttribute(
+                "aria-current",
+                tabHour === activeHour
+                    ? "true"
+                    : "false"
+            );
+        }
+    }
+
+    function recalculateCumulativeValues() {
+        var actualCumulative = 0;
+        var scrapCumulative = 0;
+
+        for (var hourNumber = 1;
+             hourNumber <= 8;
+             hourNumber++) {
+            actualCumulative += read(
+                document.getElementById(
+                    "reel_h" + hourNumber
+                )
+            );
+
+            scrapCumulative += read(
+                document.getElementById(
+                    "rubut_h" + hourNumber
+                )
+            );
+
+            set(
+                "cumul_h" + hourNumber,
+                actualCumulative
+            );
+
+            set(
+                "cumulrubut_h" + hourNumber,
+                scrapCumulative
+            );
+        }
+    }
+
+    function parseNonNegativeInteger(value) {
+        if (value === null ||
+            value === undefined ||
+            String(value).trim() === "") {
+            return 0;
+        }
+
+        var parsed = Number(value);
+
+        return Number.isFinite(parsed) &&
+               parsed >= 0 &&
+               Math.floor(parsed) === parsed
+            ? parsed
+            : null;
+    }
+
+    function read(element) {
+        if (!element) {
+            return 0;
+        }
+
+        var parsed =
+            parseInt(
+                String(element.textContent || "")
+                    .replace(/[^0-9-]/g, ""),
+                10
+            );
+
+        return Number.isFinite(parsed) &&
+               parsed >= 0
+            ? parsed
+            : 0;
+    }
+
+    function set(elementId, value) {
+        var element =
+            document.getElementById(elementId);
+
+        if (element) {
+            element.textContent = value;
+        }
+    }
+
+    function showError(message) {
+        success.textContent = "";
+        success.style.display = "none";
+
+        error.textContent = message;
+        error.style.display = "block";
+    }
+
+    function showSuccess(message) {
+        error.textContent = "";
+        error.style.display = "none";
+
+        success.textContent = message;
+        success.style.display = "block";
+    }
+
+    function hideMessages() {
+        error.textContent = "";
+        error.style.display = "none";
+
+        success.textContent = "";
+        success.style.display = "none";
+    }
+
+    function clearSavedMessageOnEdit() {
+        success.textContent = "";
+        success.style.display = "none";
+    }
+
+    actual.addEventListener(
+        "input",
+        clearSavedMessageOnEdit
+    );
+
+    scrap.addEventListener(
+        "input",
+        clearSavedMessageOnEdit
+    );
+
+    comment.addEventListener(
+        "input",
+        clearSavedMessageOnEdit
+    );
+
+    modal.addEventListener("cancel", function (event) {
+        event.preventDefault();
+        closeHourModal();
+    });
+
+    modal.addEventListener("keydown", function (event) {
+        if (event.altKey && event.key === "ArrowLeft") {
+            event.preventDefault();
+            navigateHour(-1);
+        }
+
+        if (event.altKey && event.key === "ArrowRight") {
+            event.preventDefault();
+            navigateHour(1);
+        }
+    });
+
+    recalculateCumulativeValues();
+    applyLanguage();
+    renderProductionTimeline(
+        window.productionBoardHours || readTimelineHoursFromBoard()
+    );
+    applyHourPerformanceColors();
+})();
+</script>
+</body></html>
