@@ -1,4 +1,4 @@
-<%@ Page Language="C#"
+﻿<%@ Page Language="C#"
     AutoEventWireup="true"
     CodeBehind="PB_page.aspx.cs"
     Inherits="PFF.PB_page"
@@ -6,7 +6,7 @@
     Culture="en-US"
     UICulture="en" %>
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<html lang="en">
 <head runat="server">
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -713,6 +713,147 @@ body.read-only .comment em {
     }
 }
 
+
+/* Product-rate plan and product-change workflow. */
+.actions button {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 40px;
+    padding: 0 13px;
+    border: 1px solid #d2e0e7;
+    border-radius: 9px;
+    cursor: pointer;
+    color: var(--blue);
+    background: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.actions button:hover {
+    border-color: #8ebbd1;
+    background: #f6fafc;
+}
+
+.hour-product-badge {
+    display: block;
+    max-width: 76px;
+    margin: 3px auto 0;
+    overflow: hidden;
+    color: #5e7480;
+    font-size: 8px;
+    font-weight: 800;
+    line-height: 1.15;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.product-change-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    margin: 0 0 5px;
+    padding: 5px 8px;
+    border: 1px solid #f2cf95;
+    border-radius: 8px;
+    color: #7a4c0c;
+    background: #fff8e8;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.product-change-note i {
+    color: #d68716;
+}
+
+.product-change-dialog {
+    max-width: 620px;
+}
+
+.product-change-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 9px;
+    margin-bottom: 15px;
+}
+
+.product-change-summary-item {
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid #dbe7ec;
+    border-radius: 10px;
+    background: #f8fbfc;
+}
+
+.product-change-summary-label {
+    display: block;
+    margin-bottom: 4px;
+    color: #71828c;
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.product-change-summary-value {
+    display: block;
+    overflow: hidden;
+    color: #1d668f;
+    font-size: 13px;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.product-target-preview {
+    margin-top: 14px;
+    padding: 12px;
+    border: 1px solid #b9d8e6;
+    border-radius: 10px;
+    color: #24586f;
+    background: #f1f9fc;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.product-target-preview strong {
+    color: #134f6d;
+}
+
+.product-change-warning {
+    margin-top: 10px;
+    color: #7a5a18;
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+@media (max-width:1500px), (max-height:850px) {
+    .actions button {
+        min-height: 30px;
+        padding: 0 9px;
+        border-radius: 7px;
+        font-size: 11px;
+    }
+
+    .hour-product-badge {
+        max-width: 60px;
+        margin-top: 1px;
+        font-size: 7px;
+    }
+
+    .product-change-note {
+        margin-bottom: 3px;
+        padding: 3px 6px;
+        font-size: 9px;
+    }
+}
+
+@media (max-width:700px) {
+    .product-change-summary {
+        grid-template-columns: 1fr;
+    }
+}
+
 </style>
 </head>
 <body>
@@ -767,7 +908,7 @@ body.read-only .comment em {
         class="nav-action language-navigation app-language-trigger"
         data-app-language-trigger="true"
         title="Language">
-    <i class="fa-solid fa-language"></i>
+    <i class="fa-solid fa-language" aria-hidden="true"></i>
     <span id="languageNavText"
           class="app-language-label"
           data-app-language-label="true">
@@ -814,6 +955,14 @@ body.read-only .comment em {
         <i class="fa-solid fa-chart-line"></i>
         <span data-i18n="nav.weekly">Weekly Synthesis</span>
     </a>
+
+    <button id="changeProductToolbarButton"
+            type="button"
+            onclick="openProductChangeModal()"
+            title="Change the product from a selected hour">
+        <i class="fa-solid fa-arrows-rotate"></i>
+        <span>Change product</span>
+    </button>
 
     <a href="javascript:void(0)" onclick="openBoardInfo()">
         <i class="fa-solid fa-circle-info"></i>
@@ -979,6 +1128,118 @@ body.read-only .comment em {
 </div>
 </dialog>
 
+<dialog id="productChangeDialog" class="product-change-dialog">
+<div class="modal-head">
+    <div>
+        <h3>Change product</h3>
+        <p>Choose the product and the hour from which its production rate becomes active.</p>
+    </div>
+
+    <button type="button"
+            class="x"
+            onclick="closeProductChangeModal()"
+            aria-label="Close product change">
+        <i class="fa-solid fa-xmark"></i>
+    </button>
+</div>
+
+<div class="modal-body">
+    <div class="product-change-summary">
+        <div class="product-change-summary-item">
+            <span class="product-change-summary-label">Current product</span>
+            <span id="currentProductAtHour" class="product-change-summary-value">&mdash;</span>
+        </div>
+
+        <div class="product-change-summary-item">
+            <span class="product-change-summary-label">Current rate</span>
+            <span id="currentRateAtHour" class="product-change-summary-value">&mdash;</span>
+        </div>
+
+        <div class="product-change-summary-item">
+            <span class="product-change-summary-label">Planned stop</span>
+            <span id="plannedStopAtHour" class="product-change-summary-value">&mdash;</span>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="field">
+            <label for="newProductSelect">New product</label>
+            <select id="newProductSelect" class="input"></select>
+        </div>
+
+        <div class="field">
+            <label for="effectiveHourSelect">Effective from</label>
+            <select id="effectiveHourSelect" class="input">
+                <option value="1">H1</option>
+                <option value="2">H2</option>
+                <option value="3">H3</option>
+                <option value="4">H4</option>
+                <option value="5">H5</option>
+                <option value="6">H6</option>
+                <option value="7">H7</option>
+                <option value="8">H8</option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label for="changeoverMinutesInput">Changeover duration (minutes)</label>
+            <input id="changeoverMinutesInput"
+                   class="input"
+                   type="number"
+                   min="0"
+                   max="60"
+                   step="1"
+                   value="0" />
+        </div>
+
+        <div class="field">
+            <label for="newProductRateDisplay">Selected rate</label>
+            <input id="newProductRateDisplay"
+                   class="input"
+                   type="text"
+                   value=""
+                   readonly="readonly" />
+        </div>
+
+        <div class="field full">
+            <label for="productChangeReason">Reason / note</label>
+            <textarea id="productChangeReason"
+                      class="input"
+                      maxlength="500"
+                      placeholder="Example: Product 3 completed; start Product 1."></textarea>
+        </div>
+    </div>
+
+    <div id="productTargetPreview"
+         class="product-target-preview">
+        Select a product to preview the new objective.
+    </div>
+
+    <div class="product-change-warning">
+        The selected product applies from the chosen hour until another product change is recorded.
+        Actual production and scrap already entered are never deleted.
+    </div>
+
+    <div id="productChangeError" class="error"></div>
+    <div id="productChangeSuccess" class="success"></div>
+
+    <div class="modal-actions">
+        <button type="button"
+                class="btn cancel"
+                onclick="closeProductChangeModal()">
+            Cancel
+        </button>
+
+        <button id="confirmProductChangeButton"
+                type="button"
+                class="btn save"
+                onclick="submitProductChange()">
+            Confirm product change
+        </button>
+    </div>
+</div>
+</dialog>
+
 <dialog id="hourModal">
 <div class="modal-head">
 <div><h3 id="modalTitle">Update production hour</h3><p data-i18n="modal.subtitle">Move between H1 and H8 without closing the modal.</p></div>
@@ -1044,1264 +1305,2088 @@ body.read-only .comment em {
 </form>
 <script src="Scripts/app-language.js"></script>
 <script>
-(function () {
-    "use strict";
+    (function (window, document) {
+        "use strict";
 
-    var activeHour = 0;
-    var drafts = {};
-    var dirtyHours = {};
+        var flagMarkup = {
+            en:
+                '<svg viewBox="0 0 60 40" role="img" aria-label="United Kingdom flag" ' +
+                'xmlns="http://www.w3.org/2000/svg">' +
+                '<rect width="60" height="40" fill="#012169"></rect>' +
+                '<path d="M0 0 L60 40 M60 0 L0 40" stroke="#ffffff" stroke-width="8"></path>' +
+                '<path d="M0 0 L60 40 M60 0 L0 40" stroke="#C8102E" stroke-width="4"></path>' +
+                '<path d="M30 0 V40 M0 20 H60" stroke="#ffffff" stroke-width="12"></path>' +
+                '<path d="M30 0 V40 M0 20 H60" stroke="#C8102E" stroke-width="7"></path>' +
+                '</svg>',
 
-    var modal = document.getElementById("hourModal");
-    var title = document.getElementById("modalTitle");
-    var actual = document.getElementById("modalActual");
-    var scrap = document.getElementById("modalScrap");
-    var comment = document.getElementById("modalComment");
-    var error = document.getElementById("modalError");
-    var success = document.getElementById("modalSuccess");
-    var previousButton = document.getElementById("previousHourButton");
-    var nextButton = document.getElementById("nextHourButton");
-    var boardInfoDialog = document.getElementById("boardInfoDialog");
-    var productionTimeline = document.getElementById("productionTimeline");
-    var saveHourButton = document.getElementById("saveHourButton");
-    var saveAndCloseHourButton = document.getElementById("saveAndCloseHourButton");
-    var modalSavingIndicator = document.getElementById("modalSavingIndicator");
-    var saveInProgress = false;
+            fr:
+                '<svg viewBox="0 0 60 40" role="img" aria-label="French flag" ' +
+                'xmlns="http://www.w3.org/2000/svg">' +
+                '<rect width="20" height="40" x="0" fill="#0055A4"></rect>' +
+                '<rect width="20" height="40" x="20" fill="#ffffff"></rect>' +
+                '<rect width="20" height="40" x="40" fill="#EF4135"></rect>' +
+                '</svg>'
+        };
 
-    var translations = {
-        en: {
-            "document.title": "Production Board",
-            "nav.productionBoard": "Production Board",
-            "nav.boardInfo": "Board information",
-            "nav.previousTeam": "Previous team",
-            "nav.nextTeam": "Next team",
-            "nav.weekly": "Weekly Synthesis",
-            "nav.findBoard": "Find a board",
-            "nav.changeBoard": "Change board",
-            "nav.signOut": "Sign out",
-            "nav.language": "Language",
-            "page.title": "Production Board",
-            "page.subtitle": "Use the animated arrows in the navigation bar to move between team boards.",
-            "page.boardTitle": "Production Board",
-            "info.date": "Date",
-            "info.shift": "Shift",
-            "info.team": "Team",
-            "info.product": "Product",
-            "info.line": "Line",
-            "table.target": "Target",
-            "table.cumulative": "Cumulative",
-            "table.actual": "Actual",
-            "table.scrap": "Scrap",
-            "table.comments": "Comments",
-            "table.update": "Update",
-            "timeline.title": "Shift timeline",
-            "timeline.pending": "Pending",
-            "timeline.actual": "Actual",
-            "timeline.scrap": "Scrap",
-            "boardInfo.title": "Production board information",
-            "boardInfo.subtitle": "Current production board information.",
-            "boardInfo.id": "Board ID",
-            "boardInfo.productionLine": "Production line",
-            "boardInfo.accessMode": "Access mode",
-            "boardInfo.editable": "Editable board",
-            "boardInfo.readOnly": "Read-only board",
-            "modal.title": "Update production hour",
-            "modal.subtitle": "Move between H1 and H8 without closing the modal.",
-            "modal.actualQuantity": "Actual quantity",
-            "modal.scrapQuantity": "Scrap quantity",
-            "modal.commentPlaceholder": "Describe a stop, incident or observation...",
-            "modal.noHour": "No production hour is selected.",
-            "modal.invalidActual": "Actual quantity must be a whole number equal to or greater than zero.",
-            "modal.invalidScrap": "Scrap quantity must be a whole number equal to or greater than zero.",
-            "modal.saved": "Changes were saved to the database. You can continue through the other hours.",
-            "modal.saveError": "The production data could not be saved to the database.",
-            "common.close": "Close",
-            "common.save": "Save",
-            "common.saveClose": "Save & Close"
-        },
-        fr: {
-            "document.title": "Tableau de marche",
-            "nav.productionBoard": "Tableau de marche",
-            "nav.boardInfo": "Informations du tableau",
-            "nav.previousTeam": "\u00C9quipe pr\u00E9c\u00E9dente",
-            "nav.nextTeam": "\u00C9quipe suivante",
-            "nav.weekly": "Synth\u00E8se hebdomadaire",
-            "nav.findBoard": "Rechercher un tableau",
-            "nav.changeBoard": "Changer de tableau",
-            "nav.signOut": "D\u00E9connexion",
-            "nav.language": "Langue",
-            "page.title": "Tableau de marche",
-            "page.subtitle": "Utilisez les fl\u00E8ches anim\u00E9es dans la barre de navigation pour passer entre les tableaux des \u00E9quipes.",
-            "page.boardTitle": "Tableau de marche",
-            "info.date": "Date",
-            "info.shift": "Poste",
-            "info.team": "\u00C9quipe",
-            "info.product": "Produit",
-            "info.line": "Ligne",
-            "table.target": "Objectif",
-            "table.cumulative": "Cumul",
-            "table.actual": "R\u00E9el",
-            "table.scrap": "Rebut",
-            "table.comments": "Commentaires",
-            "table.update": "Modifier",
-            "timeline.title": "Chronologie du poste",
-            "timeline.pending": "En attente",
-            "timeline.actual": "R\u00E9el",
-            "timeline.scrap": "Rebut",
-            "boardInfo.title": "Informations du tableau de marche",
-            "boardInfo.subtitle": "Informations du tableau de production actuel.",
-            "boardInfo.id": "ID du tableau",
-            "boardInfo.productionLine": "Ligne de production",
-            "boardInfo.accessMode": "Mode d\u2019acc\u00E8s",
-            "boardInfo.editable": "Tableau modifiable",
-            "boardInfo.readOnly": "Tableau en lecture seule",
-            "modal.title": "Mise \u00E0 jour de l\u2019heure de production",
-            "modal.subtitle": "Passez de H1 \u00E0 H8 sans fermer la fen\u00EAtre.",
-            "modal.actualQuantity": "Quantit\u00E9 r\u00E9elle",
-            "modal.scrapQuantity": "Quantit\u00E9 rebut",
-            "modal.commentPlaceholder": "D\u00E9crivez un arr\u00EAt, un incident ou une observation...",
-            "modal.noHour": "Aucune heure de production n\u2019est s\u00E9lectionn\u00E9e.",
-            "modal.invalidActual": "La quantit\u00E9 r\u00E9elle doit \u00EAtre un nombre entier sup\u00E9rieur ou \u00E9gal \u00E0 z\u00E9ro.",
-            "modal.invalidScrap": "La quantit\u00E9 rebut doit \u00EAtre un nombre entier sup\u00E9rieur ou \u00E9gal \u00E0 z\u00E9ro.",
-            "modal.saved": "Les modifications ont \u00E9t\u00E9 enregistr\u00E9es dans la base de donn\u00E9es. Vous pouvez continuer avec les autres heures.",
-            "modal.saveError": "Les donn\u00E9es de production n\u2019ont pas pu \u00EAtre enregistr\u00E9es dans la base de donn\u00E9es.",
-            "common.close": "Fermer",
-            "common.save": "Enregistrer",
-            "common.saveClose": "Enregistrer et fermer"
-        }
-    };
-
-    var currentLanguage =
-        readStoredLanguage();
-
-    function readStoredLanguage() {
-        try {
-            var storedLanguage =
-                window.localStorage.getItem(
-                    "productionBoardLanguage"
-                );
-
-            return storedLanguage === "fr"
-                ? "fr"
-                : "en";
-        } catch (exception) {
-            return "en";
-        }
-    }
-
-    function storeLanguage(language) {
-        try {
-            window.localStorage.setItem(
-                "productionBoardLanguage",
-                language
-            );
-        } catch (exception) {
-            /*
-             * The page still works when browser storage is unavailable.
-             */
-        }
-    }
-
-    function t(key) {
-        var languageDictionary =
-            translations[currentLanguage] ||
-            translations.en;
-
-        return languageDictionary[key] ||
-            translations.en[key] ||
-            key;
-    }
-
-    function applyLanguage() {
-        document.documentElement.lang =
-            currentLanguage;
-
-        document.title =
-            t("document.title");
-
-        var translatedElements =
-            document.querySelectorAll(
-                "[data-i18n]"
-            );
-
-        for (var index = 0;
-             index < translatedElements.length;
-             index++) {
-
-            var element =
-                translatedElements[index];
-
-            var key =
-                element.getAttribute(
-                    "data-i18n"
-                );
-
-            element.textContent =
-                t(key);
-        }
-
-        var languageText =
-            document.getElementById(
-                "languageNavText"
-            );
-
-        if (languageText) {
-            languageText.textContent =
-                t("nav.language") +
-                " \u00B7 " +
-                currentLanguage.toUpperCase();
-        }
-
-        if (comment) {
-            comment.placeholder =
-                t("modal.commentPlaceholder");
-        }
-
-        if (activeHour > 0) {
-            loadHourIntoModal(activeHour);
-        }
-
-        renderProductionTimeline(
-            readTimelineHoursFromBoard()
-        );
-    }
-
-    /*
-     * The shared app-language.js file owns the language selector modal.
-     * This page listens for the global change event so its timeline,
-     * dynamic modal titles and validation messages also update.
-     */
-    window.toggleLanguage = function () {
-        if (window.AppLanguage) {
-            window.AppLanguage.openModal();
-        }
-    };
-
-    window.addEventListener(
-        "appLanguageChanged",
-        function (event) {
-            if (!event.detail ||
-                !event.detail.language) {
+        function ensureStyles() {
+            if (document.getElementById(
+                "appLanguageFlagStyles")) {
                 return;
             }
 
-            currentLanguage =
-                event.detail.language;
+            var style =
+                document.createElement("style");
 
-            applyLanguage();
-        }
-    );
+            style.id =
+                "appLanguageFlagStyles";
 
-    var canEditField =
-        document.getElementById(
-            "CanEditProductionBoardHiddenField"
-        );
+            style.textContent =
+                ".app-language-code.app-language-flag-code{" +
+                "width:48px;height:34px;padding:0;overflow:hidden;" +
+                "border:1px solid #d5e0e6;border-radius:8px;" +
+                "background:#fff;box-shadow:0 3px 10px rgba(20,65,90,.10);" +
+                "}" +
+                ".app-language-code.app-language-flag-code svg{" +
+                "display:block;width:100%;height:100%;object-fit:cover;" +
+                "}" +
+                "@media(max-width:1500px),(max-height:850px){" +
+                ".app-language-code.app-language-flag-code{" +
+                "width:44px;height:31px;" +
+                "}" +
+                "}";
 
-    var canEdit =
-        canEditField !== null &&
-        canEditField.value === "true";
-
-    if (!canEdit) {
-        document.body.classList.add("read-only");
-    }
-
-    window.toggleMenu = function () {
-        document.getElementById("side").classList.toggle("open");
-        document.getElementById("page").classList.toggle("open");
-    };
-
-    window.openBoardInfo = function () {
-        setInfoValue("infoBoardId", getElementValue("CurrentBoardIdHiddenField"));
-        setInfoValue("infoDate", getElementValue("DateLabel"));
-        setInfoValue("infoTeam", getElementValue("TeamLabel"));
-        setInfoValue("infoShift", getElementValue("ShiftLabel"));
-        setInfoValue("infoProduct", getElementValue("ProductLabel"));
-        setInfoValue("infoLine", getElementValue("PLLabel"));
-        setInfoValue(
-            "infoAccessMode",
-            canEdit
-                ? t("boardInfo.editable")
-                : t("boardInfo.readOnly")
-        );
-
-        if (typeof boardInfoDialog.showModal === "function") {
-            boardInfoDialog.showModal();
-        } else {
-            boardInfoDialog.setAttribute("open", "open");
-        }
-    };
-
-    window.closeBoardInfo = function () {
-        if (typeof boardInfoDialog.close === "function") {
-            boardInfoDialog.close();
-        } else {
-            boardInfoDialog.removeAttribute("open");
-        }
-    };
-
-    function getElementValue(elementId) {
-        var element = document.getElementById(elementId);
-
-        if (!element) {
-            return "\u2014";
+            document.head.appendChild(style);
         }
 
-        var value = "value" in element
-            ? element.value
-            : element.textContent;
-
-        value = String(value || "").trim();
-
-        return value || "\u2014";
-    }
-
-    function setInfoValue(elementId, value) {
-        var element = document.getElementById(elementId);
-
-        if (element) {
-            element.textContent = value || "\u2014";
-        }
-    }
-
-    function getHourPerformanceStatus(
-        targetQuantity,
-        actualQuantity,
-        scrapQuantity) {
-
-        var targetValue =
-            Math.max(0, Number(targetQuantity || 0));
-
-        var actualValue =
-            Math.max(0, Number(actualQuantity || 0));
-
-        var scrapValue =
-            Math.max(0, Number(scrapQuantity || 0));
-
-        /*
-         * Pending:
-         * No production and no scrap have been entered yet.
-         */
-        if (actualValue === 0 && scrapValue === 0) {
-            return {
-                name: "pending",
-                ratio: targetValue > 0
-                    ? 0
-                    : null
-            };
-        }
-
-        /*
-         * Any scrap marks the hour red.
-         */
-        if (scrapValue > 0) {
-            return {
-                name: "red",
-                ratio: targetValue > 0
-                    ? actualValue / targetValue
-                    : null
-            };
-        }
-
-        /*
-         * When no target exists, a positive actual value is considered green.
-         */
-        if (targetValue <= 0) {
-            return {
-                name: actualValue > 0
-                    ? "green"
-                    : "pending",
-                ratio: null
-            };
-        }
-
-        var ratio =
-            actualValue / targetValue;
-
-        if (ratio >= 1) {
-            return {
-                name: "green",
-                ratio: ratio
-            };
-        }
-
-        if (ratio >= 0.90) {
-            return {
-                name: "yellow",
-                ratio: ratio
-            };
-        }
-
-        if (ratio >= 0.50) {
-            return {
-                name: "orange",
-                ratio: ratio
-            };
-        }
-
-        return {
-            name: "red",
-            ratio: ratio
-        };
-    }
-
-    function getPerformanceDetail(
-        status,
-        targetQuantity,
-        actualQuantity,
-        scrapQuantity) {
-
-        var targetValue =
-            Math.max(0, Number(targetQuantity || 0));
-
-        var actualValue =
-            Math.max(0, Number(actualQuantity || 0));
-
-        var scrapValue =
-            Math.max(0, Number(scrapQuantity || 0));
-
-        if (status.name === "pending") {
-            return t("timeline.pending");
-        }
-
-        if (scrapValue > 0) {
-            return t("timeline.scrap") +
-                " " +
-                scrapValue;
-        }
-
-        if (targetValue <= 0) {
-            return t("timeline.actual") +
-                " " +
-                actualValue;
-        }
-
-        var percentage =
-            Math.round(
-                (status.ratio || 0) * 100
-            );
-
-        return percentage +
-            "% \u00B7 " +
-            actualValue +
-            "/" +
-            targetValue;
-    }
-
-    function applyHourPerformanceColors() {
-        for (var hourNumber = 1;
-             hourNumber <= 8;
-             hourNumber++) {
-
-            var row =
-                document.getElementById(
-                    "hourRow" + hourNumber
+        function decorateOption(language) {
+            var option =
+                document.querySelector(
+                    '[data-app-language-option="' +
+                    language +
+                    '"]'
                 );
 
-            if (!row) {
-                continue;
+            if (!option) {
+                return;
             }
 
-            var targetQuantity =
-                read(
-                    document.getElementById(
-                        "h" + hourNumber + "Object"
-                    )
+            var code =
+                option.querySelector(
+                    ".app-language-code"
                 );
 
-            var actualQuantity =
-                read(
-                    document.getElementById(
-                        "reel_h" + hourNumber
-                    )
-                );
+            if (!code) {
+                return;
+            }
 
-            var scrapQuantity =
-                read(
-                    document.getElementById(
-                        "rubut_h" + hourNumber
-                    )
-                );
-
-            var status =
-                getHourPerformanceStatus(
-                    targetQuantity,
-                    actualQuantity,
-                    scrapQuantity
-                );
-
-            row.classList.remove(
-                "status-pending",
-                "status-green",
-                "status-yellow",
-                "status-orange",
-                "status-red"
+            code.classList.add(
+                "app-language-flag-code"
             );
 
-            row.classList.add(
-                "status-" + status.name
-            );
+            if (code.getAttribute(
+                "data-flag-language") !== language) {
+                code.innerHTML =
+                    flagMarkup[language];
 
-            row.setAttribute(
-                "data-performance-status",
-                status.name
-            );
-        }
-    }
-
-    window.renderProductionTimeline = function (hours) {
-        if (!productionTimeline) {
-            return;
+                code.setAttribute(
+                    "data-flag-language",
+                    language
+                );
+            }
         }
 
-        productionTimeline.innerHTML = "";
+        function decorateLanguageUi() {
+            ensureStyles();
+            decorateOption("en");
+            decorateOption("fr");
+        }
 
-        var items =
-            Array.isArray(hours)
-                ? hours
-                : readTimelineHoursFromBoard();
+        function scheduleDecoration() {
+            window.setTimeout(
+                decorateLanguageUi,
+                0
+            );
 
-        for (var index = 0;
-             index < 8;
-             index++) {
+            window.setTimeout(
+                decorateLanguageUi,
+                100
+            );
+        }
 
-            var hour =
-                items[index] || {
-                    hourNumber: index + 1,
-                    hourLabel: "H" + (index + 1),
-                    targetQuantity: 0,
-                    actualQuantity: 0,
-                    scrapQuantity: 0,
-                    comment: ""
+        if (document.readyState === "loading") {
+            document.addEventListener(
+                "DOMContentLoaded",
+                scheduleDecoration
+            );
+        } else {
+            scheduleDecoration();
+        }
+
+        window.addEventListener(
+            "appLanguageChanged",
+            scheduleDecoration
+        );
+
+        document.addEventListener(
+            "click",
+            function (event) {
+                var trigger =
+                    event.target.closest(
+                        "[data-app-language-trigger]"
+                    );
+
+                if (trigger) {
+                    window.setTimeout(
+                        decorateLanguageUi,
+                        0
+                    );
+
+                    window.setTimeout(
+                        decorateLanguageUi,
+                        80
+                    );
+                }
+            }
+        );
+    })(window, document);
+</script>
+<script>
+    (function () {
+        "use strict";
+
+        var activeHour = 0;
+        var drafts = {};
+        var dirtyHours = {};
+
+        var modal = document.getElementById("hourModal");
+        var title = document.getElementById("modalTitle");
+        var actual = document.getElementById("modalActual");
+        var scrap = document.getElementById("modalScrap");
+        var comment = document.getElementById("modalComment");
+        var error = document.getElementById("modalError");
+        var success = document.getElementById("modalSuccess");
+        var previousButton = document.getElementById("previousHourButton");
+        var nextButton = document.getElementById("nextHourButton");
+        var boardInfoDialog = document.getElementById("boardInfoDialog");
+        var productionTimeline = document.getElementById("productionTimeline");
+        var saveHourButton = document.getElementById("saveHourButton");
+        var saveAndCloseHourButton = document.getElementById("saveAndCloseHourButton");
+        var modalSavingIndicator = document.getElementById("modalSavingIndicator");
+        var saveInProgress = false;
+
+        var translations = {
+            en: {
+                "document.title": "Production Board",
+                "nav.productionBoard": "Production Board",
+                "nav.boardInfo": "Board information",
+                "nav.previousTeam": "Previous team",
+                "nav.nextTeam": "Next team",
+                "nav.weekly": "Weekly Synthesis",
+                "nav.findBoard": "Find a board",
+                "nav.changeBoard": "Change board",
+                "nav.signOut": "Sign out",
+                "nav.language": "Language",
+                "page.title": "Production Board",
+                "page.subtitle": "Use the animated arrows in the navigation bar to move between team boards.",
+                "page.boardTitle": "Production Board",
+                "info.date": "Date",
+                "info.shift": "Shift",
+                "info.team": "Team",
+                "info.product": "Product",
+                "info.line": "Line",
+                "product.mixed": "Mixed production",
+                "table.target": "Target",
+                "table.cumulative": "Cumulative",
+                "table.actual": "Actual",
+                "table.scrap": "Scrap",
+                "table.comments": "Comments",
+                "table.update": "Update",
+                "timeline.title": "Shift timeline",
+                "timeline.pending": "Pending",
+                "timeline.actual": "Actual",
+                "timeline.scrap": "Scrap",
+                "boardInfo.title": "Production board information",
+                "boardInfo.subtitle": "Current production board information.",
+                "boardInfo.id": "Board ID",
+                "boardInfo.productionLine": "Production line",
+                "boardInfo.accessMode": "Access mode",
+                "boardInfo.editable": "Editable board",
+                "boardInfo.readOnly": "Read-only board",
+                "modal.title": "Update production hour",
+                "modal.subtitle": "Move between H1 and H8 without closing the modal.",
+                "modal.actualQuantity": "Actual quantity",
+                "modal.scrapQuantity": "Scrap quantity",
+                "modal.commentPlaceholder": "Describe a stop, incident or observation...",
+                "modal.noHour": "No production hour is selected.",
+                "modal.invalidActual": "Actual quantity must be a whole number equal to or greater than zero.",
+                "modal.invalidScrap": "Scrap quantity must be a whole number equal to or greater than zero.",
+                "modal.saved": "Changes were saved to the database. You can continue through the other hours.",
+                "modal.saveError": "The production data could not be saved to the database.",
+                "common.close": "Close",
+                "common.save": "Save",
+                "common.saveClose": "Save & Close"
+            },
+            fr: {
+                "document.title": "Tableau de marche",
+                "nav.productionBoard": "Tableau de marche",
+                "nav.boardInfo": "Informations du tableau",
+                "nav.previousTeam": "\u00C9quipe pr\u00E9c\u00E9dente",
+                "nav.nextTeam": "\u00C9quipe suivante",
+                "nav.weekly": "Synth\u00E8se hebdomadaire",
+                "nav.findBoard": "Rechercher un tableau",
+                "nav.changeBoard": "Changer de tableau",
+                "nav.signOut": "D\u00E9connexion",
+                "nav.language": "Langue",
+                "page.title": "Tableau de marche",
+                "page.subtitle": "Utilisez les fl\u00E8ches anim\u00E9es dans la barre de navigation pour passer entre les tableaux des \u00E9quipes.",
+                "page.boardTitle": "Tableau de marche",
+                "info.date": "Date",
+                "info.shift": "Poste",
+                "info.team": "\u00C9quipe",
+                "info.product": "Produit",
+                "info.line": "Ligne",
+                "product.mixed": "Production mixte",
+                "table.target": "Objectif",
+                "table.cumulative": "Cumul",
+                "table.actual": "R\u00E9el",
+                "table.scrap": "Rebut",
+                "table.comments": "Commentaires",
+                "table.update": "Modifier",
+                "timeline.title": "Chronologie du poste",
+                "timeline.pending": "En attente",
+                "timeline.actual": "R\u00E9el",
+                "timeline.scrap": "Rebut",
+                "boardInfo.title": "Informations du tableau de marche",
+                "boardInfo.subtitle": "Informations du tableau de production actuel.",
+                "boardInfo.id": "ID du tableau",
+                "boardInfo.productionLine": "Ligne de production",
+                "boardInfo.accessMode": "Mode d\u2019acc\u00E8s",
+                "boardInfo.editable": "Tableau modifiable",
+                "boardInfo.readOnly": "Tableau en lecture seule",
+                "modal.title": "Mise \u00E0 jour de l\u2019heure de production",
+                "modal.subtitle": "Passez de H1 \u00E0 H8 sans fermer la fen\u00EAtre.",
+                "modal.actualQuantity": "Quantit\u00E9 r\u00E9elle",
+                "modal.scrapQuantity": "Quantit\u00E9 rebut",
+                "modal.commentPlaceholder": "D\u00E9crivez un arr\u00EAt, un incident ou une observation...",
+                "modal.noHour": "Aucune heure de production n\u2019est s\u00E9lectionn\u00E9e.",
+                "modal.invalidActual": "La quantit\u00E9 r\u00E9elle doit \u00EAtre un nombre entier sup\u00E9rieur ou \u00E9gal \u00E0 z\u00E9ro.",
+                "modal.invalidScrap": "La quantit\u00E9 rebut doit \u00EAtre un nombre entier sup\u00E9rieur ou \u00E9gal \u00E0 z\u00E9ro.",
+                "modal.saved": "Les modifications ont \u00E9t\u00E9 enregistr\u00E9es dans la base de donn\u00E9es. Vous pouvez continuer avec les autres heures.",
+                "modal.saveError": "Les donn\u00E9es de production n\u2019ont pas pu \u00EAtre enregistr\u00E9es dans la base de donn\u00E9es.",
+                "common.close": "Fermer",
+                "common.save": "Enregistrer",
+                "common.saveClose": "Enregistrer et fermer"
+            }
+        };
+
+        var currentLanguage =
+            readStoredLanguage();
+
+        function readStoredLanguage() {
+            try {
+                var storedLanguage =
+                    window.localStorage.getItem(
+                        "productionBoardLanguage"
+                    );
+
+                return storedLanguage === "fr"
+                    ? "fr"
+                    : "en";
+            } catch (exception) {
+                return "en";
+            }
+        }
+
+        function storeLanguage(language) {
+            try {
+                window.localStorage.setItem(
+                    "productionBoardLanguage",
+                    language
+                );
+            } catch (exception) {
+                /*
+                 * The page still works when browser storage is unavailable.
+                 */
+            }
+        }
+
+        function t(key) {
+            var languageDictionary =
+                translations[currentLanguage] ||
+                translations.en;
+
+            return languageDictionary[key] ||
+                translations.en[key] ||
+                key;
+        }
+
+        function applyLanguage() {
+            document.documentElement.lang =
+                currentLanguage;
+
+            document.title =
+                t("document.title");
+
+            var translatedElements =
+                document.querySelectorAll(
+                    "[data-i18n]"
+                );
+
+            for (var index = 0;
+                index < translatedElements.length;
+                index++) {
+
+                var element =
+                    translatedElements[index];
+
+                var key =
+                    element.getAttribute(
+                        "data-i18n"
+                    );
+
+                element.textContent =
+                    t(key);
+            }
+
+            var languageText =
+                document.getElementById(
+                    "languageNavText"
+                );
+
+            if (languageText) {
+                languageText.textContent =
+                    t("nav.language") +
+                    " \u00B7 " +
+                    currentLanguage.toUpperCase();
+            }
+
+            var productLabel =
+                document.getElementById(
+                    "ProductLabel"
+                );
+
+            var productPlan =
+                window.productionBoardProductPlan;
+
+            var isMixedProduction =
+                productLabel &&
+                (
+                    productLabel.getAttribute(
+                        "data-product-mode"
+                    ) === "mixed"
+                    ||
+                    (
+                        productPlan &&
+                        productPlan.IsMixed === true
+                    )
+                );
+
+            if (isMixedProduction) {
+                productLabel.textContent =
+                    t("product.mixed");
+            }
+
+            if (comment) {
+                comment.placeholder =
+                    t("modal.commentPlaceholder");
+            }
+
+            if (activeHour > 0) {
+                loadHourIntoModal(activeHour);
+            }
+
+            renderProductionTimeline(
+                readTimelineHoursFromBoard()
+            );
+        }
+
+        /*
+         * The shared app-language.js file owns the language selector modal.
+         * This page listens for the global change event so its timeline,
+         * dynamic modal titles and validation messages also update.
+         */
+        window.toggleLanguage = function () {
+            if (window.AppLanguage) {
+                window.AppLanguage.openModal();
+            }
+        };
+
+        window.addEventListener(
+            "appLanguageChanged",
+            function (event) {
+                if (!event.detail ||
+                    !event.detail.language) {
+                    return;
+                }
+
+                currentLanguage =
+                    event.detail.language;
+
+                applyLanguage();
+            }
+        );
+
+        var canEditField =
+            document.getElementById(
+                "CanEditProductionBoardHiddenField"
+            );
+
+        var canEdit =
+            canEditField !== null &&
+            canEditField.value === "true";
+
+        if (!canEdit) {
+            document.body.classList.add("read-only");
+        }
+
+        window.toggleMenu = function () {
+            document.getElementById("side").classList.toggle("open");
+            document.getElementById("page").classList.toggle("open");
+        };
+
+        window.openBoardInfo = function () {
+            setInfoValue("infoBoardId", getElementValue("CurrentBoardIdHiddenField"));
+            setInfoValue("infoDate", getElementValue("DateLabel"));
+            setInfoValue("infoTeam", getElementValue("TeamLabel"));
+            setInfoValue("infoShift", getElementValue("ShiftLabel"));
+            setInfoValue("infoProduct", getElementValue("ProductLabel"));
+            setInfoValue("infoLine", getElementValue("PLLabel"));
+            setInfoValue(
+                "infoAccessMode",
+                canEdit
+                    ? t("boardInfo.editable")
+                    : t("boardInfo.readOnly")
+            );
+
+            if (typeof boardInfoDialog.showModal === "function") {
+                boardInfoDialog.showModal();
+            } else {
+                boardInfoDialog.setAttribute("open", "open");
+            }
+        };
+
+        window.closeBoardInfo = function () {
+            if (typeof boardInfoDialog.close === "function") {
+                boardInfoDialog.close();
+            } else {
+                boardInfoDialog.removeAttribute("open");
+            }
+        };
+
+        function getElementValue(elementId) {
+            var element = document.getElementById(elementId);
+
+            if (!element) {
+                return "\u2014";
+            }
+
+            var value = "value" in element
+                ? element.value
+                : element.textContent;
+
+            value = String(value || "").trim();
+
+            return value || "\u2014";
+        }
+
+        function setInfoValue(elementId, value) {
+            var element = document.getElementById(elementId);
+
+            if (element) {
+                element.textContent = value || "\u2014";
+            }
+        }
+
+        function getHourPerformanceStatus(
+            targetQuantity,
+            actualQuantity,
+            scrapQuantity) {
+
+            var targetValue =
+                Math.max(0, Number(targetQuantity || 0));
+
+            var actualValue =
+                Math.max(0, Number(actualQuantity || 0));
+
+            var scrapValue =
+                Math.max(0, Number(scrapQuantity || 0));
+
+            /*
+             * Pending:
+             * No production and no scrap have been entered yet.
+             */
+            if (actualValue === 0 && scrapValue === 0) {
+                return {
+                    name: "pending",
+                    ratio: targetValue > 0
+                        ? 0
+                        : null
                 };
+            }
 
-            var hourNumber =
-                Number(hour.hourNumber || (index + 1));
+            /*
+             * Any scrap marks the hour red.
+             */
+            if (scrapValue > 0) {
+                return {
+                    name: "red",
+                    ratio: targetValue > 0
+                        ? actualValue / targetValue
+                        : null
+                };
+            }
 
-            var targetQuantity =
-                hour.targetQuantity !== undefined
-                    ? Number(hour.targetQuantity || 0)
-                    : read(
+            /*
+             * When no target exists, a positive actual value is considered green.
+             */
+            if (targetValue <= 0) {
+                return {
+                    name: actualValue > 0
+                        ? "green"
+                        : "pending",
+                    ratio: null
+                };
+            }
+
+            var ratio =
+                actualValue / targetValue;
+
+            if (ratio >= 1) {
+                return {
+                    name: "green",
+                    ratio: ratio
+                };
+            }
+
+            if (ratio >= 0.90) {
+                return {
+                    name: "yellow",
+                    ratio: ratio
+                };
+            }
+
+            if (ratio >= 0.50) {
+                return {
+                    name: "orange",
+                    ratio: ratio
+                };
+            }
+
+            return {
+                name: "red",
+                ratio: ratio
+            };
+        }
+
+        function getPerformanceDetail(
+            status,
+            targetQuantity,
+            actualQuantity,
+            scrapQuantity) {
+
+            var targetValue =
+                Math.max(0, Number(targetQuantity || 0));
+
+            var actualValue =
+                Math.max(0, Number(actualQuantity || 0));
+
+            var scrapValue =
+                Math.max(0, Number(scrapQuantity || 0));
+
+            if (status.name === "pending") {
+                return t("timeline.pending");
+            }
+
+            if (scrapValue > 0) {
+                return t("timeline.scrap") +
+                    " " +
+                    scrapValue;
+            }
+
+            if (targetValue <= 0) {
+                return t("timeline.actual") +
+                    " " +
+                    actualValue;
+            }
+
+            var percentage =
+                Math.round(
+                    (status.ratio || 0) * 100
+                );
+
+            return percentage +
+                "% \u00B7 " +
+                actualValue +
+                "/" +
+                targetValue;
+        }
+
+        function applyHourPerformanceColors() {
+            for (var hourNumber = 1;
+                hourNumber <= 8;
+                hourNumber++) {
+
+                var row =
+                    document.getElementById(
+                        "hourRow" + hourNumber
+                    );
+
+                if (!row) {
+                    continue;
+                }
+
+                var targetQuantity =
+                    read(
                         document.getElementById(
                             "h" + hourNumber + "Object"
                         )
                     );
 
-            var actualValue =
-                Number(hour.actualQuantity || 0);
+                var actualQuantity =
+                    read(
+                        document.getElementById(
+                            "reel_h" + hourNumber
+                        )
+                    );
 
-            var scrapValue =
-                Number(hour.scrapQuantity || 0);
+                var scrapQuantity =
+                    read(
+                        document.getElementById(
+                            "rubut_h" + hourNumber
+                        )
+                    );
 
-            var status =
-                getHourPerformanceStatus(
-                    targetQuantity,
-                    actualValue,
-                    scrapValue
+                var status =
+                    getHourPerformanceStatus(
+                        targetQuantity,
+                        actualQuantity,
+                        scrapQuantity
+                    );
+
+                row.classList.remove(
+                    "status-pending",
+                    "status-green",
+                    "status-yellow",
+                    "status-orange",
+                    "status-red"
                 );
 
-            var item =
-                document.createElement("div");
-
-            item.className =
-                "timeline-item performance-" +
-                status.name;
-
-            var marker =
-                document.createElement("span");
-
-            marker.className =
-                "timeline-marker";
-
-            var content =
-                document.createElement("span");
-
-            content.className =
-                "timeline-content";
-
-            var time =
-                document.createElement("span");
-
-            time.className =
-                "timeline-time";
-
-            time.textContent =
-                hour.hourLabel ||
-                ("H" + (index + 1));
-
-            var detail =
-                document.createElement("span");
-
-            detail.className =
-                "timeline-detail";
-
-            detail.textContent =
-                getPerformanceDetail(
-                    status,
-                    targetQuantity,
-                    actualValue,
-                    scrapValue
+                row.classList.add(
+                    "status-" + status.name
                 );
 
-            content.appendChild(time);
-            content.appendChild(detail);
-            item.appendChild(marker);
-            item.appendChild(content);
-            productionTimeline.appendChild(item);
+                row.setAttribute(
+                    "data-performance-status",
+                    status.name
+                );
+            }
         }
 
-        applyHourPerformanceColors();
-    };
+        window.renderProductionTimeline = function (hours) {
+            if (!productionTimeline) {
+                return;
+            }
 
-    function readTimelineHoursFromBoard() {
-        var hours = [];
+            productionTimeline.innerHTML = "";
 
-        for (var hourNumber = 1; hourNumber <= 8; hourNumber++) {
-            var timeElement = document.getElementById("h" + hourNumber + "Label");
-            var commentElement = document.getElementById("Commentaire_h" + hourNumber);
+            var items =
+                Array.isArray(hours)
+                    ? hours
+                    : readTimelineHoursFromBoard();
 
-            hours.push({
-                hourNumber: hourNumber,
-                hourLabel: timeElement
-                    ? String(timeElement.textContent || "").trim()
-                    : "H" + hourNumber,
-                targetQuantity: read(
-                    document.getElementById(
-                        "h" + hourNumber + "Object"
-                    )
-                ),
-                actualQuantity: read(
-                    document.getElementById(
-                        "reel_h" + hourNumber
-                    )
-                ),
-                scrapQuantity: read(
-                    document.getElementById(
-                        "rubut_h" + hourNumber
-                    )
-                ),
-                comment: commentElement
-                    ? String(commentElement.textContent || "").trim()
-                    : ""
-            });
+            for (var index = 0;
+                index < 8;
+                index++) {
+
+                var hour =
+                    items[index] || {
+                        hourNumber: index + 1,
+                        hourLabel: "H" + (index + 1),
+                        targetQuantity: 0,
+                        actualQuantity: 0,
+                        scrapQuantity: 0,
+                        comment: ""
+                    };
+
+                var hourNumber =
+                    Number(hour.hourNumber || (index + 1));
+
+                var targetQuantity =
+                    hour.targetQuantity !== undefined
+                        ? Number(hour.targetQuantity || 0)
+                        : read(
+                            document.getElementById(
+                                "h" + hourNumber + "Object"
+                            )
+                        );
+
+                var actualValue =
+                    Number(hour.actualQuantity || 0);
+
+                var scrapValue =
+                    Number(hour.scrapQuantity || 0);
+
+                var status =
+                    getHourPerformanceStatus(
+                        targetQuantity,
+                        actualValue,
+                        scrapValue
+                    );
+
+                var item =
+                    document.createElement("div");
+
+                item.className =
+                    "timeline-item performance-" +
+                    status.name;
+
+                var marker =
+                    document.createElement("span");
+
+                marker.className =
+                    "timeline-marker";
+
+                var content =
+                    document.createElement("span");
+
+                content.className =
+                    "timeline-content";
+
+                var time =
+                    document.createElement("span");
+
+                time.className =
+                    "timeline-time";
+
+                time.textContent =
+                    hour.hourLabel ||
+                    ("H" + (index + 1));
+
+                var detail =
+                    document.createElement("span");
+
+                detail.className =
+                    "timeline-detail";
+
+                detail.textContent =
+                    getPerformanceDetail(
+                        status,
+                        targetQuantity,
+                        actualValue,
+                        scrapValue
+                    );
+
+                content.appendChild(time);
+                content.appendChild(detail);
+                item.appendChild(marker);
+                item.appendChild(content);
+                productionTimeline.appendChild(item);
+            }
+
+            applyHourPerformanceColors();
+        };
+
+        function readTimelineHoursFromBoard() {
+            var hours = [];
+
+            for (var hourNumber = 1; hourNumber <= 8; hourNumber++) {
+                var timeElement = document.getElementById("h" + hourNumber + "Label");
+                var commentElement = document.getElementById("Commentaire_h" + hourNumber);
+
+                hours.push({
+                    hourNumber: hourNumber,
+                    hourLabel: timeElement
+                        ? String(timeElement.textContent || "").trim()
+                        : "H" + hourNumber,
+                    targetQuantity: read(
+                        document.getElementById(
+                            "h" + hourNumber + "Object"
+                        )
+                    ),
+                    actualQuantity: read(
+                        document.getElementById(
+                            "reel_h" + hourNumber
+                        )
+                    ),
+                    scrapQuantity: read(
+                        document.getElementById(
+                            "rubut_h" + hourNumber
+                        )
+                    ),
+                    comment: commentElement
+                        ? String(commentElement.textContent || "").trim()
+                        : ""
+                });
+            }
+
+            return hours;
         }
 
-        return hours;
-    }
+        window.openHourModal = function (hourNumber) {
+            if (!canEdit) {
+                return;
+            }
 
-    window.openHourModal = function (hourNumber) {
-        if (!canEdit) {
-            return;
-        }
+            drafts = {};
+            dirtyHours = {};
 
-        drafts = {};
-        dirtyHours = {};
+            for (var number = 1; number <= 8; number++) {
+                drafts[number] = readHourFromBoard(number);
+            }
 
-        for (var number = 1; number <= 8; number++) {
-            drafts[number] = readHourFromBoard(number);
-        }
+            activeHour = hourNumber;
+            loadHourIntoModal(activeHour);
+            updateNavigation();
 
-        activeHour = hourNumber;
-        loadHourIntoModal(activeHour);
-        updateNavigation();
+            hideMessages();
 
-        hideMessages();
+            if (typeof modal.showModal === "function") {
+                modal.showModal();
+            } else {
+                modal.setAttribute("open", "open");
+            }
 
-        if (typeof modal.showModal === "function") {
-            modal.showModal();
-        } else {
-            modal.setAttribute("open", "open");
-        }
+            window.setTimeout(function () {
+                actual.focus();
+                actual.select();
+            }, 25);
+        };
 
-        window.setTimeout(function () {
+        window.goToHour = function (hourNumber) {
+            if (hourNumber < 1 || hourNumber > 8 || hourNumber === activeHour) {
+                return;
+            }
+
+            if (!storeActiveHourDraft()) {
+                return;
+            }
+
+            activeHour = hourNumber;
+            loadHourIntoModal(activeHour);
+            updateNavigation();
+            hideMessages();
+
             actual.focus();
             actual.select();
-        }, 25);
-    };
+        };
 
-    window.goToHour = function (hourNumber) {
-        if (hourNumber < 1 || hourNumber > 8 || hourNumber === activeHour) {
-            return;
-        }
+        window.navigateHour = function (direction) {
+            var targetHour = activeHour + direction;
 
-        if (!storeActiveHourDraft()) {
-            return;
-        }
+            if (targetHour < 1 || targetHour > 8) {
+                return;
+            }
 
-        activeHour = hourNumber;
-        loadHourIntoModal(activeHour);
-        updateNavigation();
-        hideMessages();
+            window.goToHour(targetHour);
+        };
 
-        actual.focus();
-        actual.select();
-    };
+        window.closeHourModal = function () {
+            if (saveInProgress) {
+                return;
+            }
 
-    window.navigateHour = function (direction) {
-        var targetHour = activeHour + direction;
+            hideMessages();
 
-        if (targetHour < 1 || targetHour > 8) {
-            return;
-        }
+            if (typeof modal.close === "function") {
+                modal.close();
+            } else {
+                modal.removeAttribute("open");
+            }
 
-        window.goToHour(targetHour);
-    };
+            activeHour = 0;
+            drafts = {};
+            dirtyHours = {};
+        };
 
-    window.closeHourModal = function () {
-        if (saveInProgress) {
-            return;
-        }
+        window.saveHourUpdates = function (closeAfterSave) {
+            if (saveInProgress) {
+                return;
+            }
 
-        hideMessages();
+            hideMessages();
 
-        if (typeof modal.close === "function") {
-            modal.close();
-        } else {
-            modal.removeAttribute("open");
-        }
+            if (!storeActiveHourDraft()) {
+                return;
+            }
 
-        activeHour = 0;
-        drafts = {};
-        dirtyHours = {};
-    };
+            var saveRequest =
+                buildProductionHoursSaveRequest();
 
-    window.saveHourUpdates = function (closeAfterSave) {
-        if (saveInProgress) {
-            return;
-        }
+            if (!saveRequest) {
+                showError(
+                    t("modal.saveError")
+                );
 
-        hideMessages();
+                return;
+            }
 
-        if (!storeActiveHourDraft()) {
-            return;
-        }
+            setSavingState(true);
 
-        var saveRequest =
-            buildProductionHoursSaveRequest();
+            saveProductionHoursToServer(
+                saveRequest
+            )
+                .then(function (result) {
+                    if (!result ||
+                        result.Success !== true) {
+                        throw new Error(
+                            result && result.Message
+                                ? result.Message
+                                : t("modal.saveError")
+                        );
+                    }
 
-        if (!saveRequest) {
-            showError(
-                t("modal.saveError")
-            );
+                    applyDraftsToBoard();
+                    recalculateCumulativeValues();
+                    renderProductionTimeline(
+                        readTimelineHoursFromBoard()
+                    );
+                    applyHourPerformanceColors();
 
-            return;
-        }
+                    window.productionBoardHours =
+                        readTimelineHoursFromBoard();
 
-        setSavingState(true);
+                    dirtyHours = {};
+                    updateNavigation();
 
-        saveProductionHoursToServer(
-            saveRequest
-        )
-            .then(function (result) {
-                if (!result ||
-                    result.Success !== true) {
-                    throw new Error(
-                        result && result.Message
-                            ? result.Message
+                    if (closeAfterSave) {
+                        setSavingState(false);
+                        closeHourModal();
+                        return;
+                    }
+
+                    showSuccess(
+                        t("modal.saved")
+                    );
+                })
+                .catch(function (saveError) {
+                    showError(
+                        saveError && saveError.message
+                            ? saveError.message
                             : t("modal.saveError")
                     );
-                }
-
-                applyDraftsToBoard();
-                recalculateCumulativeValues();
-                renderProductionTimeline(
-                    readTimelineHoursFromBoard()
-                );
-                applyHourPerformanceColors();
-
-                window.productionBoardHours =
-                    readTimelineHoursFromBoard();
-
-                dirtyHours = {};
-                updateNavigation();
-
-                if (closeAfterSave) {
-                    setSavingState(false);
-                    closeHourModal();
-                    return;
-                }
-
-                showSuccess(
-                    t("modal.saved")
-                );
-            })
-            .catch(function (saveError) {
-                showError(
-                    saveError && saveError.message
-                        ? saveError.message
-                        : t("modal.saveError")
-                );
-            })
-            .then(function () {
-                setSavingState(false);
-            });
-    };
-
-    function buildProductionHoursSaveRequest() {
-        var boardIdElement =
-            document.getElementById(
-                "CurrentBoardIdHiddenField"
-            );
-
-        var boardId =
-            boardIdElement
-                ? parseInt(
-                    boardIdElement.value,
-                    10
-                )
-                : 0;
-
-        if (!Number.isFinite(boardId) ||
-            boardId <= 0) {
-            return null;
-        }
-
-        var hours = [];
-
-        for (var hourNumber = 1;
-             hourNumber <= 8;
-             hourNumber++) {
-
-            var draft =
-                drafts[hourNumber] ||
-                readHourFromBoard(
-                    hourNumber
-                );
-
-            hours.push({
-                HourNumber:
-                    hourNumber,
-
-                ActualQuantity:
-                    Number(draft.actual || 0),
-
-                ScrapQuantity:
-                    Number(draft.scrap || 0),
-
-                Comment:
-                    String(draft.comment || "")
-                        .trim()
-            });
-        }
-
-        return {
-            BoardId:
-                boardId,
-
-            Hours:
-                hours
-        };
-    }
-
-    function saveProductionHoursToServer(
-        request) {
-
-        var endpoint =
-            window.location.pathname +
-            "/SaveProductionHours";
-
-        return window.fetch(
-            endpoint,
-            {
-                method: "POST",
-                credentials: "same-origin",
-                headers: {
-                    "Content-Type":
-                        "application/json; charset=utf-8",
-
-                    "Accept":
-                        "application/json"
-                },
-                body: JSON.stringify({
-                    request: request
                 })
+                .then(function () {
+                    setSavingState(false);
+                });
+        };
+
+        function buildProductionHoursSaveRequest() {
+            var boardIdElement =
+                document.getElementById(
+                    "CurrentBoardIdHiddenField"
+                );
+
+            var boardId =
+                boardIdElement
+                    ? parseInt(
+                        boardIdElement.value,
+                        10
+                    )
+                    : 0;
+
+            if (!Number.isFinite(boardId) ||
+                boardId <= 0) {
+                return null;
             }
-        )
-            .then(function (response) {
-                return response.text()
-                    .then(function (responseText) {
-                        var payload = null;
 
-                        try {
-                            payload =
-                                responseText
-                                    ? JSON.parse(
-                                        responseText
-                                    )
-                                    : null;
-                        } catch (parseError) {
-                            payload = null;
-                        }
+            var hours = [];
 
-                        if (!response.ok) {
-                            var serverMessage =
-                                payload && payload.Message
-                                    ? payload.Message
-                                    : t("modal.saveError");
+            for (var hourNumber = 1;
+                hourNumber <= 8;
+                hourNumber++) {
 
-                            throw new Error(
-                                serverMessage
-                            );
-                        }
+                var draft =
+                    drafts[hourNumber] ||
+                    readHourFromBoard(
+                        hourNumber
+                    );
 
-                        var result =
-                            payload && payload.d !== undefined
-                                ? payload.d
-                                : payload;
+                hours.push({
+                    HourNumber:
+                        hourNumber,
 
-                        if (typeof result === "string") {
+                    ActualQuantity:
+                        Number(draft.actual || 0),
+
+                    ScrapQuantity:
+                        Number(draft.scrap || 0),
+
+                    Comment:
+                        String(draft.comment || "")
+                            .trim()
+                });
+            }
+
+            return {
+                BoardId:
+                    boardId,
+
+                Hours:
+                    hours
+            };
+        }
+
+        function saveProductionHoursToServer(
+            request) {
+
+            var endpoint =
+                window.location.pathname +
+                "/SaveProductionHours";
+
+            return window.fetch(
+                endpoint,
+                {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: {
+                        "Content-Type":
+                            "application/json; charset=utf-8",
+
+                        "Accept":
+                            "application/json"
+                    },
+                    body: JSON.stringify({
+                        request: request
+                    })
+                }
+            )
+                .then(function (response) {
+                    return response.text()
+                        .then(function (responseText) {
+                            var payload = null;
+
                             try {
-                                result =
-                                    JSON.parse(result);
-                            } catch (parseResultError) {
-                                result = null;
+                                payload =
+                                    responseText
+                                        ? JSON.parse(
+                                            responseText
+                                        )
+                                        : null;
+                            } catch (parseError) {
+                                payload = null;
                             }
-                        }
 
-                        return result;
-                    });
-            });
-    }
+                            if (!response.ok) {
+                                var serverMessage =
+                                    payload && payload.Message
+                                        ? payload.Message
+                                        : t("modal.saveError");
 
-    function setSavingState(isSaving) {
-        saveInProgress =
-            isSaving === true;
+                                throw new Error(
+                                    serverMessage
+                                );
+                            }
 
-        if (saveHourButton) {
-            saveHourButton.disabled =
-                saveInProgress;
+                            var result =
+                                payload && payload.d !== undefined
+                                    ? payload.d
+                                    : payload;
+
+                            if (typeof result === "string") {
+                                try {
+                                    result =
+                                        JSON.parse(result);
+                                } catch (parseResultError) {
+                                    result = null;
+                                }
+                            }
+
+                            return result;
+                        });
+                });
         }
 
-        if (saveAndCloseHourButton) {
-            saveAndCloseHourButton.disabled =
-                saveInProgress;
+        function setSavingState(isSaving) {
+            saveInProgress =
+                isSaving === true;
+
+            if (saveHourButton) {
+                saveHourButton.disabled =
+                    saveInProgress;
+            }
+
+            if (saveAndCloseHourButton) {
+                saveAndCloseHourButton.disabled =
+                    saveInProgress;
+            }
+
+            if (previousButton) {
+                previousButton.disabled =
+                    saveInProgress ||
+                    activeHour <= 1;
+            }
+
+            if (nextButton) {
+                nextButton.disabled =
+                    saveInProgress ||
+                    activeHour >= 8;
+            }
+
+            if (modalSavingIndicator) {
+                modalSavingIndicator.classList.toggle(
+                    "visible",
+                    saveInProgress
+                );
+            }
         }
 
-        if (previousButton) {
+        /*
+         * Compatibility aliases for older modal calls.
+         */
+        window.saveAllHourUpdates = function () {
+            window.saveHourUpdates(true);
+        };
+
+        window.saveHourUpdate = function () {
+            window.saveHourUpdates(false);
+        };
+
+        function applyDraftsToBoard() {
+            for (var hourNumber = 1; hourNumber <= 8; hourNumber++) {
+                var draft = drafts[hourNumber];
+
+                set(
+                    "reel_h" + hourNumber,
+                    draft.actual
+                );
+
+                set(
+                    "rubut_h" + hourNumber,
+                    draft.scrap
+                );
+
+                set(
+                    "Commentaire_h" + hourNumber,
+                    draft.comment || "\u2014"
+                );
+            }
+        }
+
+        function readHourFromBoard(hourNumber) {
+            var commentElement =
+                document.getElementById("Commentaire_h" + hourNumber);
+
+            var commentText =
+                commentElement && commentElement.textContent
+                    ? commentElement.textContent.trim()
+                    : "";
+
+            return {
+                actual: read(
+                    document.getElementById("reel_h" + hourNumber)
+                ),
+                scrap: read(
+                    document.getElementById("rubut_h" + hourNumber)
+                ),
+                comment:
+                    commentText === "\u2014" ||
+                        commentText === "No comment"
+                        ? ""
+                        : commentText
+            };
+        }
+
+        function loadHourIntoModal(hourNumber) {
+            var draft = drafts[hourNumber];
+            var timeElement =
+                document.getElementById("h" + hourNumber + "Label");
+
+            var timeText =
+                timeElement && timeElement.textContent
+                    ? timeElement.textContent.trim()
+                    : "H" + hourNumber;
+
+            title.textContent =
+                t("modal.title") +
+                " \u00B7 H" +
+                hourNumber +
+                "/8 \u2014 " +
+                timeText;
+
+            actual.value = draft.actual;
+            scrap.value = draft.scrap;
+            comment.value = draft.comment;
+        }
+
+        function storeActiveHourDraft() {
+            if (activeHour < 1 || activeHour > 8) {
+                showError(t("modal.noHour"));
+                return false;
+            }
+
+            var actualValue = parseNonNegativeInteger(actual.value);
+            var scrapValue = parseNonNegativeInteger(scrap.value);
+
+            if (actualValue === null) {
+                showError(
+                    t("modal.invalidActual")
+                );
+                actual.focus();
+                return false;
+            }
+
+            if (scrapValue === null) {
+                showError(
+                    t("modal.invalidScrap")
+                );
+                scrap.focus();
+                return false;
+            }
+
+            var previousDraft = drafts[activeHour];
+            var newComment = comment.value.trim();
+
+            var hasChanged =
+                previousDraft.actual !== actualValue ||
+                previousDraft.scrap !== scrapValue ||
+                previousDraft.comment !== newComment;
+
+            drafts[activeHour] = {
+                actual: actualValue,
+                scrap: scrapValue,
+                comment: newComment
+            };
+
+            if (hasChanged) {
+                dirtyHours[activeHour] = true;
+            }
+
+            updateNavigation();
+            return true;
+        }
+
+        function updateNavigation() {
             previousButton.disabled =
                 saveInProgress ||
                 activeHour <= 1;
-        }
 
-        if (nextButton) {
             nextButton.disabled =
                 saveInProgress ||
                 activeHour >= 8;
+
+            var tabs =
+                document.querySelectorAll(
+                    "#hourTabs .hour-tab"
+                );
+
+            for (var index = 0; index < tabs.length; index++) {
+                var tab = tabs[index];
+                var tabHour =
+                    parseInt(
+                        tab.getAttribute("data-hour"),
+                        10
+                    );
+
+                tab.classList.toggle(
+                    "active",
+                    tabHour === activeHour
+                );
+
+                tab.classList.toggle(
+                    "dirty",
+                    dirtyHours[tabHour] === true
+                );
+
+                tab.setAttribute(
+                    "aria-current",
+                    tabHour === activeHour
+                        ? "true"
+                        : "false"
+                );
+            }
         }
 
-        if (modalSavingIndicator) {
-            modalSavingIndicator.classList.toggle(
-                "visible",
-                saveInProgress
-            );
-        }
-    }
+        function recalculateCumulativeValues() {
+            var actualCumulative = 0;
+            var scrapCumulative = 0;
 
-    /*
-     * Compatibility aliases for older modal calls.
-     */
-    window.saveAllHourUpdates = function () {
-        window.saveHourUpdates(true);
-    };
+            for (var hourNumber = 1;
+                hourNumber <= 8;
+                hourNumber++) {
+                actualCumulative += read(
+                    document.getElementById(
+                        "reel_h" + hourNumber
+                    )
+                );
 
-    window.saveHourUpdate = function () {
-        window.saveHourUpdates(false);
-    };
+                scrapCumulative += read(
+                    document.getElementById(
+                        "rubut_h" + hourNumber
+                    )
+                );
 
-    function applyDraftsToBoard() {
-        for (var hourNumber = 1; hourNumber <= 8; hourNumber++) {
-            var draft = drafts[hourNumber];
+                set(
+                    "cumul_h" + hourNumber,
+                    actualCumulative
+                );
 
-            set(
-                "reel_h" + hourNumber,
-                draft.actual
-            );
-
-            set(
-                "rubut_h" + hourNumber,
-                draft.scrap
-            );
-
-            set(
-                "Commentaire_h" + hourNumber,
-                draft.comment || "\u2014"
-            );
-        }
-    }
-
-    function readHourFromBoard(hourNumber) {
-        var commentElement =
-            document.getElementById("Commentaire_h" + hourNumber);
-
-        var commentText =
-            commentElement && commentElement.textContent
-                ? commentElement.textContent.trim()
-                : "";
-
-        return {
-            actual: read(
-                document.getElementById("reel_h" + hourNumber)
-            ),
-            scrap: read(
-                document.getElementById("rubut_h" + hourNumber)
-            ),
-            comment:
-                commentText === "\u2014" ||
-                commentText === "No comment"
-                    ? ""
-                    : commentText
-        };
-    }
-
-    function loadHourIntoModal(hourNumber) {
-        var draft = drafts[hourNumber];
-        var timeElement =
-            document.getElementById("h" + hourNumber + "Label");
-
-        var timeText =
-            timeElement && timeElement.textContent
-                ? timeElement.textContent.trim()
-                : "H" + hourNumber;
-
-        title.textContent =
-            t("modal.title") +
-            " \u00B7 H" +
-            hourNumber +
-            "/8 \u2014 " +
-            timeText;
-
-        actual.value = draft.actual;
-        scrap.value = draft.scrap;
-        comment.value = draft.comment;
-    }
-
-    function storeActiveHourDraft() {
-        if (activeHour < 1 || activeHour > 8) {
-            showError(t("modal.noHour"));
-            return false;
+                set(
+                    "cumulrubut_h" + hourNumber,
+                    scrapCumulative
+                );
+            }
         }
 
-        var actualValue = parseNonNegativeInteger(actual.value);
-        var scrapValue = parseNonNegativeInteger(scrap.value);
+        function parseNonNegativeInteger(value) {
+            if (value === null ||
+                value === undefined ||
+                String(value).trim() === "") {
+                return 0;
+            }
 
-        if (actualValue === null) {
-            showError(
-                t("modal.invalidActual")
-            );
-            actual.focus();
-            return false;
+            var parsed = Number(value);
+
+            return Number.isFinite(parsed) &&
+                parsed >= 0 &&
+                Math.floor(parsed) === parsed
+                ? parsed
+                : null;
         }
 
-        if (scrapValue === null) {
-            showError(
-                t("modal.invalidScrap")
-            );
-            scrap.focus();
-            return false;
-        }
+        function read(element) {
+            if (!element) {
+                return 0;
+            }
 
-        var previousDraft = drafts[activeHour];
-        var newComment = comment.value.trim();
-
-        var hasChanged =
-            previousDraft.actual !== actualValue ||
-            previousDraft.scrap !== scrapValue ||
-            previousDraft.comment !== newComment;
-
-        drafts[activeHour] = {
-            actual: actualValue,
-            scrap: scrapValue,
-            comment: newComment
-        };
-
-        if (hasChanged) {
-            dirtyHours[activeHour] = true;
-        }
-
-        updateNavigation();
-        return true;
-    }
-
-    function updateNavigation() {
-        previousButton.disabled =
-            saveInProgress ||
-            activeHour <= 1;
-
-        nextButton.disabled =
-            saveInProgress ||
-            activeHour >= 8;
-
-        var tabs =
-            document.querySelectorAll(
-                "#hourTabs .hour-tab"
-            );
-
-        for (var index = 0; index < tabs.length; index++) {
-            var tab = tabs[index];
-            var tabHour =
+            var parsed =
                 parseInt(
-                    tab.getAttribute("data-hour"),
+                    String(element.textContent || "")
+                        .replace(/[^0-9-]/g, ""),
                     10
                 );
 
-            tab.classList.toggle(
-                "active",
-                tabHour === activeHour
-            );
-
-            tab.classList.toggle(
-                "dirty",
-                dirtyHours[tabHour] === true
-            );
-
-            tab.setAttribute(
-                "aria-current",
-                tabHour === activeHour
-                    ? "true"
-                    : "false"
-            );
-        }
-    }
-
-    function recalculateCumulativeValues() {
-        var actualCumulative = 0;
-        var scrapCumulative = 0;
-
-        for (var hourNumber = 1;
-             hourNumber <= 8;
-             hourNumber++) {
-            actualCumulative += read(
-                document.getElementById(
-                    "reel_h" + hourNumber
-                )
-            );
-
-            scrapCumulative += read(
-                document.getElementById(
-                    "rubut_h" + hourNumber
-                )
-            );
-
-            set(
-                "cumul_h" + hourNumber,
-                actualCumulative
-            );
-
-            set(
-                "cumulrubut_h" + hourNumber,
-                scrapCumulative
-            );
-        }
-    }
-
-    function parseNonNegativeInteger(value) {
-        if (value === null ||
-            value === undefined ||
-            String(value).trim() === "") {
-            return 0;
+            return Number.isFinite(parsed) &&
+                parsed >= 0
+                ? parsed
+                : 0;
         }
 
-        var parsed = Number(value);
+        function set(elementId, value) {
+            var element =
+                document.getElementById(elementId);
 
-        return Number.isFinite(parsed) &&
-               parsed >= 0 &&
-               Math.floor(parsed) === parsed
-            ? parsed
-            : null;
-    }
-
-    function read(element) {
-        if (!element) {
-            return 0;
+            if (element) {
+                element.textContent = value;
+            }
         }
 
-        var parsed =
-            parseInt(
-                String(element.textContent || "")
-                    .replace(/[^0-9-]/g, ""),
-                10
-            );
+        function showError(message) {
+            success.textContent = "";
+            success.style.display = "none";
 
-        return Number.isFinite(parsed) &&
-               parsed >= 0
-            ? parsed
-            : 0;
-    }
-
-    function set(elementId, value) {
-        var element =
-            document.getElementById(elementId);
-
-        if (element) {
-            element.textContent = value;
+            error.textContent = message;
+            error.style.display = "block";
         }
-    }
 
-    function showError(message) {
-        success.textContent = "";
-        success.style.display = "none";
+        function showSuccess(message) {
+            error.textContent = "";
+            error.style.display = "none";
 
-        error.textContent = message;
-        error.style.display = "block";
-    }
+            success.textContent = message;
+            success.style.display = "block";
+        }
 
-    function showSuccess(message) {
-        error.textContent = "";
-        error.style.display = "none";
+        function hideMessages() {
+            error.textContent = "";
+            error.style.display = "none";
 
-        success.textContent = message;
-        success.style.display = "block";
-    }
+            success.textContent = "";
+            success.style.display = "none";
+        }
 
-    function hideMessages() {
-        error.textContent = "";
-        error.style.display = "none";
+        function clearSavedMessageOnEdit() {
+            success.textContent = "";
+            success.style.display = "none";
+        }
 
-        success.textContent = "";
-        success.style.display = "none";
-    }
+        actual.addEventListener(
+            "input",
+            clearSavedMessageOnEdit
+        );
 
-    function clearSavedMessageOnEdit() {
-        success.textContent = "";
-        success.style.display = "none";
-    }
+        scrap.addEventListener(
+            "input",
+            clearSavedMessageOnEdit
+        );
 
-    actual.addEventListener(
-        "input",
-        clearSavedMessageOnEdit
-    );
+        comment.addEventListener(
+            "input",
+            clearSavedMessageOnEdit
+        );
 
-    scrap.addEventListener(
-        "input",
-        clearSavedMessageOnEdit
-    );
-
-    comment.addEventListener(
-        "input",
-        clearSavedMessageOnEdit
-    );
-
-    modal.addEventListener("cancel", function (event) {
-        event.preventDefault();
-        closeHourModal();
-    });
-
-    modal.addEventListener("keydown", function (event) {
-        if (event.altKey && event.key === "ArrowLeft") {
+        modal.addEventListener("cancel", function (event) {
             event.preventDefault();
-            navigateHour(-1);
-        }
+            closeHourModal();
+        });
 
-        if (event.altKey && event.key === "ArrowRight") {
-            event.preventDefault();
-            navigateHour(1);
-        }
-    });
+        modal.addEventListener("keydown", function (event) {
+            if (event.altKey && event.key === "ArrowLeft") {
+                event.preventDefault();
+                navigateHour(-1);
+            }
 
-    recalculateCumulativeValues();
-    applyLanguage();
-    renderProductionTimeline(
-        window.productionBoardHours || readTimelineHoursFromBoard()
-    );
-    applyHourPerformanceColors();
-})();
+            if (event.altKey && event.key === "ArrowRight") {
+                event.preventDefault();
+                navigateHour(1);
+            }
+        });
+
+        recalculateCumulativeValues();
+        applyLanguage();
+        renderProductionTimeline(
+            window.productionBoardHours || readTimelineHoursFromBoard()
+        );
+        applyHourPerformanceColors();
+    })();
 </script>
+
+<script>
+    (function () {
+        "use strict";
+
+        var plan =
+            window.productionBoardProductPlan ||
+            {
+                HeaderProductText: "",
+                IsMixed: false,
+                Products: [],
+                Hours: []
+            };
+
+        var dialog =
+            document.getElementById(
+                "productChangeDialog");
+
+        var openButton =
+            document.getElementById(
+                "changeProductToolbarButton");
+
+        var productSelect =
+            document.getElementById(
+                "newProductSelect");
+
+        var hourSelect =
+            document.getElementById(
+                "effectiveHourSelect");
+
+        var changeoverInput =
+            document.getElementById(
+                "changeoverMinutesInput");
+
+        var rateDisplay =
+            document.getElementById(
+                "newProductRateDisplay");
+
+        var reasonInput =
+            document.getElementById(
+                "productChangeReason");
+
+        var preview =
+            document.getElementById(
+                "productTargetPreview");
+
+        var currentProduct =
+            document.getElementById(
+                "currentProductAtHour");
+
+        var currentRate =
+            document.getElementById(
+                "currentRateAtHour");
+
+        var plannedStop =
+            document.getElementById(
+                "plannedStopAtHour");
+
+        var error =
+            document.getElementById(
+                "productChangeError");
+
+        var success =
+            document.getElementById(
+                "productChangeSuccess");
+
+        var confirmButton =
+            document.getElementById(
+                "confirmProductChangeButton");
+
+        function canEditBoard() {
+            var field =
+                document.getElementById(
+                    "CanEditProductionBoardHiddenField");
+
+            return field &&
+                String(field.value)
+                    .toLowerCase() === "true";
+        }
+
+        function findHour(hourNumber) {
+            var hours =
+                plan.Hours || [];
+
+            for (var index = 0;
+                index < hours.length;
+                index++) {
+                if (Number(hours[index].HourNumber) ===
+                    Number(hourNumber)) {
+                    return hours[index];
+                }
+            }
+
+            return null;
+        }
+
+        function findProduct(productId) {
+            var products =
+                plan.Products || [];
+
+            for (var index = 0;
+                index < products.length;
+                index++) {
+                if (Number(products[index].Id) ===
+                    Number(productId)) {
+                    return products[index];
+                }
+            }
+
+            return null;
+        }
+
+        function addProductOption(product) {
+            var option =
+                document.createElement(
+                    "option");
+
+            option.value =
+                String(product.Id);
+
+            option.textContent =
+                product.Name +
+                " \u00B7 " +
+                product.StandardRatePerHour +
+                "/h \u00B7 " +
+                formatUnitsPerMinute(
+                    product.StandardRatePerHour);
+
+            productSelect.appendChild(
+                option);
+        }
+
+        function formatUnitsPerMinute(ratePerHour) {
+            var value =
+                Number(ratePerHour || 0) / 60;
+
+            return value % 1 === 0
+                ? value.toFixed(0) + "/min"
+                : value.toFixed(2) + "/min";
+        }
+
+        function populateProducts() {
+            productSelect.innerHTML =
+                "";
+
+            var products =
+                plan.Products || [];
+
+            for (var index = 0;
+                index < products.length;
+                index++) {
+                addProductOption(
+                    products[index]);
+            }
+        }
+
+        function selectFirstDifferentProduct(
+            currentProductId) {
+            var products =
+                plan.Products || [];
+
+            for (var index = 0;
+                index < products.length;
+                index++) {
+                if (Number(products[index].Id) !==
+                    Number(currentProductId)) {
+                    productSelect.value =
+                        String(products[index].Id);
+
+                    return;
+                }
+            }
+        }
+
+        function getSuggestedHour() {
+            var productionHours =
+                window.productionBoardHours || [];
+
+            for (var index = 0;
+                index < productionHours.length;
+                index++) {
+                if (Number(
+                    productionHours[index]
+                        .actualQuantity || 0) === 0) {
+                    return Number(
+                        productionHours[index]
+                            .hourNumber || 1);
+                }
+            }
+
+            return 8;
+        }
+
+        function renderProductPlan() {
+            var hours =
+                plan.Hours || [];
+
+            for (var index = 0;
+                index < hours.length;
+                index++) {
+                var hour =
+                    hours[index];
+
+                var row =
+                    document.getElementById(
+                        "hourRow" +
+                        hour.HourNumber);
+
+                if (!row) {
+                    continue;
+                }
+
+                var hourCell =
+                    row.querySelector(
+                        ".hour");
+
+                if (hourCell) {
+                    var badge =
+                        document.createElement(
+                            "span");
+
+                    badge.className =
+                        "hour-product-badge";
+
+                    badge.textContent =
+                        hour.ProductCode +
+                        " \u00B7 " +
+                        hour.RatePerHour +
+                        "/h";
+
+                    badge.title =
+                        hour.ProductName +
+                        " \u00B7 " +
+                        formatUnitsPerMinute(
+                            hour.RatePerHour);
+
+                    hourCell.appendChild(
+                        badge);
+                }
+
+                if (hour.IsProductChange) {
+                    var commentCell =
+                        row.querySelector(
+                            ".comment");
+
+                    if (commentCell) {
+                        var note =
+                            document.createElement(
+                                "div");
+
+                        note.className =
+                            "product-change-note";
+
+                        var icon =
+                            document.createElement(
+                                "i");
+
+                        icon.className =
+                            "fa-solid fa-arrows-rotate";
+
+                        var text =
+                            document.createElement(
+                                "span");
+
+                        text.textContent =
+                            (hour.PreviousProductName ||
+                                "Previous product") +
+                            " \u2192 " +
+                            hour.ProductName +
+                            (
+                                Number(
+                                    hour.ChangeoverMinutes) > 0
+                                    ? " \u00B7 " +
+                                    hour.ChangeoverMinutes +
+                                    " min"
+                                    : ""
+                            );
+
+                        note.appendChild(
+                            icon);
+
+                        note.appendChild(
+                            text);
+
+                        commentCell.insertBefore(
+                            note,
+                            commentCell.firstChild);
+                    }
+                }
+            }
+        }
+
+        function updateProductPreview() {
+            var hour =
+                findHour(
+                    Number(hourSelect.value));
+
+            var product =
+                findProduct(
+                    Number(productSelect.value));
+
+            if (hour) {
+                currentProduct.textContent =
+                    hour.ProductName;
+
+                currentRate.textContent =
+                    hour.RatePerHour +
+                    "/h \u00B7 " +
+                    formatUnitsPerMinute(
+                        hour.RatePerHour);
+
+                plannedStop.textContent =
+                    hour.PlannedStopMinutes +
+                    " min";
+            }
+
+            if (!product || !hour) {
+                rateDisplay.value =
+                    "";
+
+                preview.textContent =
+                    "Select a valid product and hour.";
+
+                return;
+            }
+
+            var changeoverMinutes =
+                parseNonNegativeInteger(
+                    changeoverInput.value);
+
+            if (changeoverMinutes === null) {
+                preview.textContent =
+                    "Changeover duration must be a non-negative whole number.";
+
+                return;
+            }
+
+            var maximumChangeover =
+                60 -
+                Number(
+                    hour.PlannedStopMinutes || 0);
+
+            changeoverInput.max =
+                String(maximumChangeover);
+
+            var availableMinutes =
+                Math.max(
+                    0,
+                    60 -
+                    Number(
+                        hour.PlannedStopMinutes || 0) -
+                    changeoverMinutes);
+
+            var target =
+                Math.round(
+                    Number(
+                        product.StandardRatePerHour || 0) *
+                    availableMinutes /
+                    60);
+
+            rateDisplay.value =
+                product.StandardRatePerHour +
+                " units/hour \u00B7 " +
+                formatUnitsPerMinute(
+                    product.StandardRatePerHour);
+
+            preview.innerHTML =
+                "<strong>Preview for H" +
+                hour.HourNumber +
+                ":</strong> " +
+                availableMinutes +
+                " productive minutes \u00D7 " +
+                formatUnitsPerMinute(
+                    product.StandardRatePerHour) +
+                " = <strong>" +
+                target +
+                " units</strong>.";
+        }
+
+        function parseNonNegativeInteger(value) {
+            if (value === null ||
+                value === undefined ||
+                String(value).trim() === "") {
+                return 0;
+            }
+
+            var parsed =
+                Number(value);
+
+            return Number.isFinite(parsed) &&
+                parsed >= 0 &&
+                Math.floor(parsed) === parsed
+                ? parsed
+                : null;
+        }
+
+        function showError(message) {
+            success.style.display =
+                "none";
+
+            success.textContent =
+                "";
+
+            error.textContent =
+                message;
+
+            error.style.display =
+                "block";
+        }
+
+        function hideMessages() {
+            error.style.display =
+                "none";
+
+            error.textContent =
+                "";
+
+            success.style.display =
+                "none";
+
+            success.textContent =
+                "";
+        }
+
+        window.openProductChangeModal =
+            function () {
+                if (!canEditBoard()) {
+                    return;
+                }
+
+                hideMessages();
+                populateProducts();
+
+                var suggestedHour =
+                    getSuggestedHour();
+
+                hourSelect.value =
+                    String(suggestedHour);
+
+                changeoverInput.value =
+                    "0";
+
+                reasonInput.value =
+                    "";
+
+                var hour =
+                    findHour(
+                        suggestedHour);
+
+                if (hour) {
+                    selectFirstDifferentProduct(
+                        hour.ProductId);
+                }
+
+                updateProductPreview();
+
+                if (typeof dialog.showModal ===
+                    "function") {
+                    dialog.showModal();
+                } else {
+                    dialog.setAttribute(
+                        "open",
+                        "open");
+                }
+            };
+
+        window.closeProductChangeModal =
+            function () {
+                if (dialog.open) {
+                    dialog.close();
+                }
+            };
+
+        window.submitProductChange =
+            function () {
+                hideMessages();
+
+                var boardIdField =
+                    document.getElementById(
+                        "CurrentBoardIdHiddenField");
+
+                var boardId =
+                    boardIdField
+                        ? Number(boardIdField.value)
+                        : 0;
+
+                var newProductId =
+                    Number(productSelect.value);
+
+                var effectiveHourNumber =
+                    Number(hourSelect.value);
+
+                var changeoverMinutes =
+                    parseNonNegativeInteger(
+                        changeoverInput.value);
+
+                if (!boardId ||
+                    !newProductId ||
+                    effectiveHourNumber < 1 ||
+                    effectiveHourNumber > 8) {
+                    showError(
+                        "Select a valid board, product and effective hour.");
+
+                    return;
+                }
+
+                if (changeoverMinutes === null) {
+                    showError(
+                        "Changeover duration must be a non-negative whole number.");
+
+                    return;
+                }
+
+                confirmButton.disabled =
+                    true;
+
+                confirmButton.textContent =
+                    "Saving...";
+
+                fetch(
+                    "PB_page.aspx/ChangeProduct",
+                    {
+                        method: "POST",
+                        credentials: "same-origin",
+                        headers: {
+                            "Content-Type":
+                                "application/json; charset=utf-8"
+                        },
+                        body: JSON.stringify(
+                            {
+                                request: {
+                                    BoardId:
+                                        boardId,
+
+                                    NewProductId:
+                                        newProductId,
+
+                                    EffectiveHourNumber:
+                                        effectiveHourNumber,
+
+                                    ChangeoverMinutes:
+                                        changeoverMinutes,
+
+                                    Reason:
+                                        reasonInput.value || ""
+                                }
+                            })
+                    }
+                )
+                    .then(function (response) {
+                        if (!response.ok) {
+                            throw new Error(
+                                "The server returned HTTP " +
+                                response.status +
+                                ".");
+                        }
+
+                        return response.json();
+                    })
+                    .then(function (payload) {
+                        var result =
+                            payload &&
+                                payload.d !== undefined
+                                ? payload.d
+                                : payload;
+
+                        if (!result ||
+                            result.Success !== true) {
+                            throw new Error(
+                                result &&
+                                    result.Message
+                                    ? result.Message
+                                    : "The product could not be changed.");
+                        }
+
+                        success.textContent =
+                            result.Message ||
+                            "Product changed successfully.";
+
+                        success.style.display =
+                            "block";
+
+                        window.setTimeout(
+                            function () {
+                                window.location.reload();
+                            },
+                            450
+                        );
+                    })
+                    .catch(function (exception) {
+                        showError(
+                            exception &&
+                                exception.message
+                                ? exception.message
+                                : "The product could not be changed.");
+                    })
+                    .finally(function () {
+                        confirmButton.disabled =
+                            false;
+
+                        confirmButton.textContent =
+                            "Confirm product change";
+                    });
+            };
+
+        hourSelect.addEventListener(
+            "change",
+            function () {
+                var hour =
+                    findHour(
+                        Number(
+                            hourSelect.value));
+
+                if (hour) {
+                    selectFirstDifferentProduct(
+                        hour.ProductId);
+                }
+
+                updateProductPreview();
+            }
+        );
+
+        productSelect.addEventListener(
+            "change",
+            updateProductPreview
+        );
+
+        changeoverInput.addEventListener(
+            "input",
+            updateProductPreview
+        );
+
+        dialog.addEventListener(
+            "cancel",
+            function (event) {
+                event.preventDefault();
+                closeProductChangeModal();
+            }
+        );
+
+        if (!canEditBoard() &&
+            openButton) {
+            openButton.style.display =
+                "none";
+        }
+
+        renderProductPlan();
+    })();
+</script>
+
 </body></html>

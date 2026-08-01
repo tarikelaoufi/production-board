@@ -55,6 +55,7 @@
     <Content Include="Sql\001_CreateProductionBoardSchema.sql" />
     <Content Include="Sql\002_CreateAuthenticationSchema.sql" />
     <Content Include="Sql\003_SeedInitialUsers.sql" />
+    <Content Include="Sql\004_CreateProductsAndProductChanges.sql" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ItemGroup></ItemGroup>

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -31,26 +31,22 @@ namespace PFF
             "CurrentProductionBoardId";
 
         /*
-         * Standard target plan used by every product and every shift:
-         * H1 = 55  -> 5-minute planned meeting
-         * H2 = 60
-         * H3 = 60
-         * H4 = 60
-         * H5 = 40  -> planned break
-         * H6 = 60
-         * H7 = 60
-         * H8 = 50  -> 10-minute workstation organization
+         * Planned stops are independent from the product rate.
+         *
+         * H1: 5-minute team meeting
+         * H5: 20-minute planned pause
+         * H8: 10-minute workstation organization
          */
-        private static readonly int[] StandardHourlyTargets =
+        private static readonly int[] PlannedStopMinutesByHour =
         {
-            55,
-            60,
-            60,
-            60,
-            40,
-            60,
-            60,
-            50
+            5,
+            0,
+            0,
+            0,
+            20,
+            0,
+            0,
+            10
         };
 
         protected void Page_Load(
@@ -173,6 +169,116 @@ namespace PFF
             {
                 return ProductionHoursSaveResult.Failed(
                     "The production hours could not be saved: " +
+                    exception.Message);
+            }
+        }
+
+        [WebMethod(EnableSession = true)]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public static ProductChangeResult
+            ChangeProduct(
+                ProductChangeRequest request)
+        {
+            try
+            {
+                HttpContext context =
+                    HttpContext.Current;
+
+                if (context == null ||
+                    context.User == null ||
+                    context.User.Identity == null ||
+                    !context.User.Identity.IsAuthenticated)
+                {
+                    return ProductChangeResult.Failed(
+                        "Your session has expired. Sign in again.");
+                }
+
+                if (context.Session == null)
+                {
+                    return ProductChangeResult.Failed(
+                        "The authenticated session is not available.");
+                }
+
+                if (request == null)
+                {
+                    return ProductChangeResult.Failed(
+                        "No product-change data was received.");
+                }
+
+                string role =
+                    Convert.ToString(
+                        context.Session[
+                            "CurrentUserRole"],
+                        CultureInfo.InvariantCulture);
+
+                if (!IsSupportedRole(role))
+                {
+                    return ProductChangeResult.Failed(
+                        "Your account does not have access to this action.");
+                }
+
+                if (string.Equals(
+                        role,
+                        ApplicationRoles.Viewer,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    return ProductChangeResult.Failed(
+                        "Viewer accounts cannot change products.");
+                }
+
+                ConnectionFactory connectionFactory =
+                    new ConnectionFactory();
+
+                ProductionBoardProductPlanRepository repository =
+                    new ProductionBoardProductPlanRepository(
+                        connectionFactory);
+
+                string boardTeamName =
+                    repository.GetBoardTeamName(
+                        request.BoardId);
+
+                if (string.IsNullOrWhiteSpace(
+                        boardTeamName))
+                {
+                    return ProductChangeResult.Failed(
+                        "The selected production board does not exist.");
+                }
+
+                if (string.Equals(
+                        role,
+                        ApplicationRoles.TeamLeader,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    string assignedTeamName =
+                        Convert.ToString(
+                            context.Session[
+                                "CurrentTeamName"],
+                            CultureInfo.InvariantCulture);
+
+                    if (string.IsNullOrWhiteSpace(
+                            assignedTeamName) ||
+                        !string.Equals(
+                            assignedTeamName.Trim(),
+                            boardTeamName.Trim(),
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        return ProductChangeResult.Failed(
+                            "You may view other teams, but you can change products only on your assigned team board.");
+                    }
+                }
+
+                string changedBy =
+                    context.User.Identity.Name ??
+                    string.Empty;
+
+                return repository.ChangeProduct(
+                    request,
+                    changedBy);
+            }
+            catch (Exception exception)
+            {
+                return ProductChangeResult.Failed(
+                    "The product could not be changed: " +
                     exception.Message);
             }
         }
@@ -424,12 +530,12 @@ namespace PFF
                          StringComparison.OrdinalIgnoreCase))
             {
                 ReadOnlyModeLabel.Text =
-                    "Other team board · read-only";
+                    "Other team board \u00B7 read-only";
             }
             else
             {
                 ReadOnlyModeLabel.Text =
-                    "Viewer mode · read-only";
+                    "Viewer mode \u00B7 read-only";
             }
         }
 
@@ -622,107 +728,80 @@ namespace PFF
                 HttpUtility.HtmlEncode(
                     board.TeamName);
 
-            ProductLabel.Text =
-                HttpUtility.HtmlEncode(
+            ConnectionFactory connectionFactory =
+                new ConnectionFactory();
+
+            ProductionBoardProductPlanRepository productRepository =
+                new ProductionBoardProductPlanRepository(
+                    connectionFactory);
+
+            ProductPlanData productPlan =
+                productRepository.EnsureAndLoadPlan(
+                    board.Id,
                     board.ProductName);
 
-            /*
-             * Enforce the same hourly target distribution for every
-             * product and every shift before the values are displayed.
-             *
-             * This moves the planned-break target from H4 to H5:
-             * H4 = 60 and H5 = 40.
-             */
-            ApplyStandardHourlyTargetPlan(
-                board.Hours);
+            ApplyProductPlan(
+                board.Hours,
+                productPlan.Hours);
+
+            ProductLabel.Text =
+                HttpUtility.HtmlEncode(
+                    productPlan.HeaderProductText);
+
+            ProductLabel.Attributes[
+                "data-product-mode"] =
+                productPlan.IsMixed
+                    ? "mixed"
+                    : "single";
 
             BindBoardHours(
                 board.Hours);
+
+            RegisterProductPlanScript(
+                productPlan);
         }
 
-        private static void ApplyStandardHourlyTargetPlan(
-            IList<HourModel> hours)
+        private static void ApplyProductPlan(
+            IList<HourModel> hours,
+            IList<BoardHourProductPlanItem> productHours)
         {
             if (hours == null)
             {
                 return;
             }
 
-            IDictionary<int, HourModel> hoursByNumber =
-                hours
-                    .Where(hour => hour != null)
-                    .GroupBy(hour => hour.HourNumber)
+            IDictionary<int, BoardHourProductPlanItem> planByHour =
+                (productHours ??
+                 new List<BoardHourProductPlanItem>())
+                    .Where(item => item != null)
+                    .GroupBy(item => item.HourNumber)
                     .ToDictionary(
                         group => group.Key,
                         group => group.First());
 
             int targetCumulative = 0;
 
-            for (int hourNumber = 1;
-                 hourNumber <= StandardHourlyTargets.Length;
-                 hourNumber++)
+            foreach (HourModel hour in
+                     hours
+                         .Where(item => item != null)
+                         .OrderBy(item => item.HourNumber))
             {
-                int targetQuantity =
-                    StandardHourlyTargets[
-                        hourNumber - 1];
+                BoardHourProductPlanItem planItem;
 
-                targetCumulative +=
-                    targetQuantity;
-
-                HourModel hour;
-
-                if (!hoursByNumber.TryGetValue(
-                        hourNumber,
-                        out hour))
+                if (planByHour.TryGetValue(
+                        hour.HourNumber,
+                        out planItem))
                 {
-                    continue;
+                    hour.TargetQuantity =
+                        planItem.TargetQuantity;
                 }
 
-                hour.TargetQuantity =
-                    targetQuantity;
+                targetCumulative +=
+                    hour.TargetQuantity;
 
                 hour.TargetCumulative =
                     targetCumulative;
             }
-        }
-
-        private static int GetStandardHourlyTarget(
-            int hourNumber)
-        {
-            if (hourNumber < 1 ||
-                hourNumber > StandardHourlyTargets.Length)
-            {
-                return 0;
-            }
-
-            return StandardHourlyTargets[
-                hourNumber - 1];
-        }
-
-        private static int GetStandardTargetCumulative(
-            int hourNumber)
-        {
-            if (hourNumber < 1)
-            {
-                return 0;
-            }
-
-            int lastIndex =
-                Math.Min(
-                    hourNumber,
-                    StandardHourlyTargets.Length);
-
-            int cumulative = 0;
-
-            for (int index = 0;
-                 index < lastIndex;
-                 index++)
-            {
-                cumulative +=
-                    StandardHourlyTargets[index];
-            }
-
-            return cumulative;
         }
 
         private void BindBoardHours(
@@ -819,16 +898,12 @@ namespace PFF
                     hourNumber.ToString(
                         CultureInfo.InvariantCulture),
 
-                TargetQuantity =
-                    GetStandardHourlyTarget(
-                        hourNumber),
+                TargetQuantity = 0,
 
                 ActualQuantity = 0,
                 ScrapQuantity = 0,
 
-                TargetCumulative =
-                    GetStandardTargetCumulative(
-                        hourNumber),
+                TargetCumulative = 0,
 
                 ActualCumulative = 0,
                 ScrapCumulative = 0,
@@ -955,13 +1030,40 @@ namespace PFF
 
         setText(
             'Commentaire_h' + number,
-            hour.comment || '—');
+            hour.comment || '\u2014');
     }
 })();";
 
             ClientScript.RegisterStartupScript(
                 GetType(),
                 "bind-production-board-hours",
+                script,
+                true);
+        }
+
+        private void RegisterProductPlanScript(
+            ProductPlanData productPlan)
+        {
+            JavaScriptSerializer serializer =
+                new JavaScriptSerializer();
+
+            string json =
+                serializer
+                    .Serialize(
+                        productPlan ??
+                        new ProductPlanData())
+                    .Replace(
+                        "</",
+                        "<\\/");
+
+            string script =
+                "window.productionBoardProductPlan = " +
+                json +
+                ";";
+
+            ClientScript.RegisterStartupScript(
+                GetType(),
+                "bind-production-board-product-plan",
                 script,
                 true);
         }
@@ -2127,4 +2229,1551 @@ WHERE Id = @BoardId;";
         }
     }
 
+}
+
+
+namespace PFF
+{
+    public sealed class ProductChangeRequest
+    {
+        public int BoardId { get; set; }
+
+        public int NewProductId { get; set; }
+
+        public int EffectiveHourNumber { get; set; }
+
+        public int ChangeoverMinutes { get; set; }
+
+        public string Reason { get; set; }
+    }
+
+    public sealed class ProductChangeResult
+    {
+        public bool Success { get; set; }
+
+        public string Message { get; set; }
+
+        public ProductPlanData Plan { get; set; }
+
+        public static ProductChangeResult Failed(
+            string message)
+        {
+            return new ProductChangeResult
+            {
+                Success = false,
+                Message =
+                    message ??
+                    "The product could not be changed.",
+                Plan = null
+            };
+        }
+    }
+
+    public sealed class ProductOptionItem
+    {
+        public int Id { get; set; }
+
+        public string Code { get; set; }
+
+        public string Name { get; set; }
+
+        public int StandardRatePerHour { get; set; }
+
+        public decimal UnitsPerMinute
+        {
+            get
+            {
+                return StandardRatePerHour / 60m;
+            }
+        }
+    }
+
+    public sealed class BoardHourProductPlanItem
+    {
+        public int HourNumber { get; set; }
+
+        public int ProductId { get; set; }
+
+        public string ProductCode { get; set; }
+
+        public string ProductName { get; set; }
+
+        public int RatePerHour { get; set; }
+
+        public int PlannedStopMinutes { get; set; }
+
+        public int ChangeoverMinutes { get; set; }
+
+        public int AvailableMinutes { get; set; }
+
+        public int TargetQuantity { get; set; }
+
+        public int TargetCumulative { get; set; }
+
+        public bool IsProductChange { get; set; }
+
+        public string PreviousProductName { get; set; }
+
+        public string ChangeReason { get; set; }
+    }
+
+    public sealed class ProductPlanData
+    {
+        public ProductPlanData()
+        {
+            Products =
+                new List<ProductOptionItem>();
+
+            Hours =
+                new List<BoardHourProductPlanItem>();
+        }
+
+        public string HeaderProductText { get; set; }
+
+        public bool IsMixed { get; set; }
+
+        public IList<ProductOptionItem> Products { get; set; }
+
+        public IList<BoardHourProductPlanItem> Hours { get; set; }
+    }
+
+    internal sealed class ProductionBoardProductPlanRepository
+    {
+        private const string MigrationFileName =
+            "ProductionBoard.Data/Sql/004_CreateProductsAndProductChanges.sql";
+
+        private static readonly object SchemaVerificationLock =
+            new object();
+
+        private static bool _schemaVerified;
+
+        private static readonly int[] PlannedStopMinutesByHour =
+        {
+            5,
+            0,
+            0,
+            0,
+            20,
+            0,
+            0,
+            10
+        };
+
+        private readonly ConnectionFactory _connectionFactory;
+
+        public ProductionBoardProductPlanRepository(
+            ConnectionFactory connectionFactory)
+        {
+            if (connectionFactory == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(connectionFactory));
+            }
+
+            _connectionFactory =
+                connectionFactory;
+        }
+
+        public string GetBoardTeamName(
+            int boardId)
+        {
+            if (boardId <= 0)
+            {
+                return null;
+            }
+
+            const string sql = @"
+SELECT TeamName
+FROM dbo.ProductionBoards
+WHERE Id = @BoardId;";
+
+            using (SqlConnection connection =
+                   _connectionFactory.CreateConnection())
+            using (SqlCommand command =
+                   new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add(
+                    "@BoardId",
+                    SqlDbType.Int).Value =
+                    boardId;
+
+                connection.Open();
+
+                object result =
+                    command.ExecuteScalar();
+
+                return result == null ||
+                       result == DBNull.Value
+                    ? null
+                    : Convert.ToString(
+                        result,
+                        CultureInfo.InvariantCulture);
+            }
+        }
+
+        public ProductPlanData EnsureAndLoadPlan(
+            int boardId,
+            string fallbackInitialProductName)
+        {
+            if (boardId <= 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(boardId));
+            }
+
+            using (SqlConnection connection =
+                   _connectionFactory.CreateConnection())
+            {
+                connection.Open();
+
+                EnsureSchema(connection);
+
+                bool needsPersistence =
+                    NeedsPlanPersistence(
+                        connection,
+                        boardId);
+
+                IList<ProductOptionItem> products =
+                    LoadActiveProducts(
+                        connection,
+                        null);
+
+                BoardInitialProduct initialProduct =
+                    LoadAndEnsureInitialProduct(
+                        connection,
+                        null,
+                        boardId,
+                        fallbackInitialProductName);
+
+                IDictionary<int, ProductChangeSnapshot> changes =
+                    LoadChanges(
+                        connection,
+                        null,
+                        boardId);
+
+                ProductPlanData plan =
+                    BuildPlan(
+                        products,
+                        initialProduct,
+                        changes);
+
+                /*
+                 * A normal page view is read-only. The hourly product
+                 * snapshot is written only once for newly created or
+                 * legacy boards. Product changes already persist their
+                 * recalculated plan in ChangeProduct().
+                 */
+                if (needsPersistence)
+                {
+                    using (SqlTransaction transaction =
+                           connection.BeginTransaction())
+                    {
+                        try
+                        {
+                            PersistPlan(
+                                connection,
+                                transaction,
+                                boardId,
+                                plan.Hours);
+
+                            transaction.Commit();
+                        }
+                        catch
+                        {
+                            transaction.Rollback();
+                            throw;
+                        }
+                    }
+                }
+
+                return plan;
+            }
+        }
+
+        public ProductChangeResult ChangeProduct(
+            ProductChangeRequest request,
+            string changedBy)
+        {
+            string validationError;
+
+            if (!TryValidateRequest(
+                    request,
+                    out validationError))
+            {
+                return ProductChangeResult.Failed(
+                    validationError);
+            }
+
+            using (SqlConnection connection =
+                   _connectionFactory.CreateConnection())
+            {
+                connection.Open();
+
+                EnsureSchema(connection);
+
+                using (SqlTransaction transaction =
+                       connection.BeginTransaction())
+                {
+                    try
+                    {
+                        IList<ProductOptionItem> products =
+                            LoadActiveProducts(
+                                connection,
+                                transaction);
+
+                        ProductOptionItem newProduct =
+                            products.FirstOrDefault(
+                                product =>
+                                    product.Id ==
+                                    request.NewProductId);
+
+                        if (newProduct == null)
+                        {
+                            return ProductChangeResult.Failed(
+                                "The selected product does not exist or is inactive.");
+                        }
+
+                        BoardInitialProduct initialProduct =
+                            LoadAndEnsureInitialProduct(
+                                connection,
+                                transaction,
+                                request.BoardId,
+                                null);
+
+                        IDictionary<int, ProductChangeSnapshot> changes =
+                            LoadChanges(
+                                connection,
+                                transaction,
+                                request.BoardId);
+
+                        ProductSnapshot previousProduct =
+                            ResolveProductBeforeHour(
+                                initialProduct,
+                                changes,
+                                request.EffectiveHourNumber);
+
+                        if (previousProduct.ProductId ==
+                                newProduct.Id &&
+                            !changes.ContainsKey(
+                                request.EffectiveHourNumber))
+                        {
+                            return ProductChangeResult.Failed(
+                                newProduct.Name +
+                                " is already active at H" +
+                                request.EffectiveHourNumber
+                                    .ToString(
+                                        CultureInfo.InvariantCulture) +
+                                ".");
+                        }
+
+                        int maximumChangeoverMinutes =
+                            60 -
+                            GetPlannedStopMinutes(
+                                request.EffectiveHourNumber);
+
+                        if (request.ChangeoverMinutes >
+                            maximumChangeoverMinutes)
+                        {
+                            return ProductChangeResult.Failed(
+                                "The changeover cannot exceed " +
+                                maximumChangeoverMinutes.ToString(
+                                    CultureInfo.InvariantCulture) +
+                                " minutes for this hour because it already contains a planned stop.");
+                        }
+
+                        UpsertChange(
+                            connection,
+                            transaction,
+                            request,
+                            previousProduct,
+                            newProduct,
+                            changedBy);
+
+                        changes =
+                            LoadChanges(
+                                connection,
+                                transaction,
+                                request.BoardId);
+
+                        ProductPlanData plan =
+                            BuildPlan(
+                                products,
+                                initialProduct,
+                                changes);
+
+                        PersistPlan(
+                            connection,
+                            transaction,
+                            request.BoardId,
+                            plan.Hours);
+
+                        UpdateBoardTimestamp(
+                            connection,
+                            transaction,
+                            request.BoardId);
+
+                        transaction.Commit();
+
+                        return new ProductChangeResult
+                        {
+                            Success = true,
+                            Message =
+                                "Product changed successfully from H" +
+                                request.EffectiveHourNumber.ToString(
+                                    CultureInfo.InvariantCulture) +
+                                ".",
+                            Plan = plan
+                        };
+                    }
+                    catch (Exception exception)
+                    {
+                        try
+                        {
+                            transaction.Rollback();
+                        }
+                        catch
+                        {
+                            // Preserve the original database error.
+                        }
+
+                        return ProductChangeResult.Failed(
+                            "The product could not be changed: " +
+                            exception.Message);
+                    }
+                }
+            }
+        }
+
+        private static bool TryValidateRequest(
+            ProductChangeRequest request,
+            out string validationError)
+        {
+            validationError =
+                string.Empty;
+
+            if (request == null)
+            {
+                validationError =
+                    "No product-change data was received.";
+
+                return false;
+            }
+
+            if (request.BoardId <= 0)
+            {
+                validationError =
+                    "The production board ID is invalid.";
+
+                return false;
+            }
+
+            if (request.NewProductId <= 0)
+            {
+                validationError =
+                    "Select a valid product.";
+
+                return false;
+            }
+
+            if (request.EffectiveHourNumber < 1 ||
+                request.EffectiveHourNumber > 8)
+            {
+                validationError =
+                    "The effective hour must be between H1 and H8.";
+
+                return false;
+            }
+
+            if (request.ChangeoverMinutes < 0 ||
+                request.ChangeoverMinutes > 60)
+            {
+                validationError =
+                    "Changeover duration must be between 0 and 60 minutes.";
+
+                return false;
+            }
+
+            string reason =
+                request.Reason == null
+                    ? string.Empty
+                    : request.Reason.Trim();
+
+            if (reason.Length > 500)
+            {
+                validationError =
+                    "The reason cannot exceed 500 characters.";
+
+                return false;
+            }
+
+            request.Reason =
+                reason;
+
+            return true;
+        }
+
+        private static void EnsureSchema(
+            SqlConnection connection)
+        {
+            if (_schemaVerified)
+            {
+                return;
+            }
+
+            lock (SchemaVerificationLock)
+            {
+                if (_schemaVerified)
+                {
+                    return;
+                }
+
+                const string sql = @"
+SELECT
+    CASE
+        WHEN OBJECT_ID(N'dbo.ProductionProducts', N'U') IS NOT NULL
+         AND OBJECT_ID(N'dbo.ProductionBoardProductChanges', N'U') IS NOT NULL
+         AND COL_LENGTH(N'dbo.ProductionBoards', N'InitialProductId') IS NOT NULL
+         AND COL_LENGTH(N'dbo.ProductionBoards', N'InitialProductRatePerHourSnapshot') IS NOT NULL
+         AND COL_LENGTH(N'dbo.ProductionBoardHours', N'ProductId') IS NOT NULL
+         AND COL_LENGTH(N'dbo.ProductionBoardHours', N'ProductNameSnapshot') IS NOT NULL
+         AND COL_LENGTH(N'dbo.ProductionBoardHours', N'RatePerHourSnapshot') IS NOT NULL
+         AND COL_LENGTH(N'dbo.ProductionBoardHours', N'PlannedStopMinutes') IS NOT NULL
+         AND COL_LENGTH(N'dbo.ProductionBoardHours', N'ChangeoverMinutes') IS NOT NULL
+        THEN 1
+        ELSE 0
+    END;";
+
+                using (SqlCommand command =
+                       new SqlCommand(sql, connection))
+                {
+                    bool isReady =
+                        Convert.ToInt32(
+                            command.ExecuteScalar(),
+                            CultureInfo.InvariantCulture) == 1;
+
+                    if (!isReady)
+                    {
+                        throw new InvalidOperationException(
+                            "The product-rate database migration is missing. Run " +
+                            MigrationFileName +
+                            " in SQL Server.");
+                    }
+                }
+
+                _schemaVerified = true;
+            }
+        }
+
+        private static bool NeedsPlanPersistence(
+            SqlConnection connection,
+            int boardId)
+        {
+            const string sql = @"
+SELECT
+    CASE
+        WHEN EXISTS
+        (
+            SELECT 1
+            FROM dbo.ProductionBoardHours
+            WHERE ProductionBoardId = @BoardId
+              AND
+              (
+                  ProductId IS NULL
+                  OR ProductNameSnapshot IS NULL
+                  OR RatePerHourSnapshot IS NULL
+              )
+        )
+        THEN 1
+        ELSE 0
+    END;";
+
+            using (SqlCommand command =
+                   new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add(
+                    "@BoardId",
+                    SqlDbType.Int).Value =
+                    boardId;
+
+                return Convert.ToInt32(
+                    command.ExecuteScalar(),
+                    CultureInfo.InvariantCulture) == 1;
+            }
+        }
+
+        private static IList<ProductOptionItem>
+            LoadActiveProducts(
+                SqlConnection connection,
+                SqlTransaction transaction)
+        {
+            const string sql = @"
+SELECT
+    Id,
+    Code,
+    Name,
+    StandardRatePerHour
+FROM dbo.ProductionProducts
+WHERE IsActive = 1
+ORDER BY Name;";
+
+            IList<ProductOptionItem> products =
+                new List<ProductOptionItem>();
+
+            using (SqlCommand command =
+                   new SqlCommand(
+                       sql,
+                       connection,
+                       transaction))
+            using (SqlDataReader reader =
+                   command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    products.Add(
+                        new ProductOptionItem
+                        {
+                            Id =
+                                reader.GetInt32(
+                                    reader.GetOrdinal("Id")),
+
+                            Code =
+                                reader.GetString(
+                                    reader.GetOrdinal("Code")),
+
+                            Name =
+                                reader.GetString(
+                                    reader.GetOrdinal("Name")),
+
+                            StandardRatePerHour =
+                                reader.GetInt32(
+                                    reader.GetOrdinal(
+                                        "StandardRatePerHour"))
+                        });
+                }
+            }
+
+            if (products.Count == 0)
+            {
+                throw new InvalidOperationException(
+                    "No active product is configured.");
+            }
+
+            return products;
+        }
+
+        private static BoardInitialProduct
+            LoadAndEnsureInitialProduct(
+                SqlConnection connection,
+                SqlTransaction transaction,
+                int boardId,
+                string fallbackInitialProductName)
+        {
+            const string boardSql = @"
+SELECT
+    ProductName,
+    InitialProductId,
+    InitialProductRatePerHourSnapshot
+FROM dbo.ProductionBoards
+WHERE Id = @BoardId;";
+
+            string boardProductName;
+            int? initialProductId;
+            int? initialRate;
+
+            using (SqlCommand command =
+                   new SqlCommand(
+                       boardSql,
+                       connection,
+                       transaction))
+            {
+                command.Parameters.Add(
+                    "@BoardId",
+                    SqlDbType.Int).Value =
+                    boardId;
+
+                using (SqlDataReader reader =
+                       command.ExecuteReader())
+                {
+                    if (!reader.Read())
+                    {
+                        throw new InvalidOperationException(
+                            "The selected production board does not exist.");
+                    }
+
+                    boardProductName =
+                        reader.IsDBNull(
+                            reader.GetOrdinal("ProductName"))
+                            ? fallbackInitialProductName
+                            : reader.GetString(
+                                reader.GetOrdinal("ProductName"));
+
+                    initialProductId =
+                        reader.IsDBNull(
+                            reader.GetOrdinal("InitialProductId"))
+                            ? (int?)null
+                            : reader.GetInt32(
+                                reader.GetOrdinal("InitialProductId"));
+
+                    initialRate =
+                        reader.IsDBNull(
+                            reader.GetOrdinal(
+                                "InitialProductRatePerHourSnapshot"))
+                            ? (int?)null
+                            : reader.GetInt32(
+                                reader.GetOrdinal(
+                                    "InitialProductRatePerHourSnapshot"));
+                }
+            }
+
+            if (initialProductId.HasValue &&
+                initialRate.HasValue)
+            {
+                ProductOptionItem storedProduct =
+                    LoadProductById(
+                        connection,
+                        transaction,
+                        initialProductId.Value);
+
+                return new BoardInitialProduct
+                {
+                    ProductId =
+                        storedProduct.Id,
+
+                    ProductCode =
+                        storedProduct.Code,
+
+                    ProductName =
+                        string.IsNullOrWhiteSpace(
+                            boardProductName)
+                            ? storedProduct.Name
+                            : boardProductName.Trim(),
+
+                    RatePerHour =
+                        initialRate.Value
+                };
+            }
+
+            string productName =
+                !string.IsNullOrWhiteSpace(
+                    boardProductName)
+                    ? boardProductName.Trim()
+                    : fallbackInitialProductName;
+
+            ProductOptionItem resolvedProduct =
+                LoadProductByNameOrCode(
+                    connection,
+                    transaction,
+                    productName);
+
+            if (resolvedProduct == null)
+            {
+                throw new InvalidOperationException(
+                    "The board's initial product '" +
+                    productName +
+                    "' is not configured in dbo.ProductionProducts.");
+            }
+
+            const string updateSql = @"
+UPDATE dbo.ProductionBoards
+SET
+    InitialProductId = @InitialProductId,
+    InitialProductRatePerHourSnapshot = @InitialRate,
+    UpdatedAt = SYSUTCDATETIME()
+WHERE Id = @BoardId;";
+
+            using (SqlCommand updateCommand =
+                   new SqlCommand(
+                       updateSql,
+                       connection,
+                       transaction))
+            {
+                updateCommand.Parameters.Add(
+                    "@InitialProductId",
+                    SqlDbType.Int).Value =
+                    resolvedProduct.Id;
+
+                updateCommand.Parameters.Add(
+                    "@InitialRate",
+                    SqlDbType.Int).Value =
+                    resolvedProduct.StandardRatePerHour;
+
+                updateCommand.Parameters.Add(
+                    "@BoardId",
+                    SqlDbType.Int).Value =
+                    boardId;
+
+                updateCommand.ExecuteNonQuery();
+            }
+
+            return new BoardInitialProduct
+            {
+                ProductId =
+                    resolvedProduct.Id,
+
+                ProductCode =
+                    resolvedProduct.Code,
+
+                ProductName =
+                    resolvedProduct.Name,
+
+                RatePerHour =
+                    resolvedProduct.StandardRatePerHour
+            };
+        }
+
+        private static ProductOptionItem LoadProductById(
+            SqlConnection connection,
+            SqlTransaction transaction,
+            int productId)
+        {
+            const string sql = @"
+SELECT
+    Id,
+    Code,
+    Name,
+    StandardRatePerHour
+FROM dbo.ProductionProducts
+WHERE Id = @ProductId;";
+
+            using (SqlCommand command =
+                   new SqlCommand(
+                       sql,
+                       connection,
+                       transaction))
+            {
+                command.Parameters.Add(
+                    "@ProductId",
+                    SqlDbType.Int).Value =
+                    productId;
+
+                using (SqlDataReader reader =
+                       command.ExecuteReader())
+                {
+                    if (!reader.Read())
+                    {
+                        throw new InvalidOperationException(
+                            "The board's initial product no longer exists.");
+                    }
+
+                    return new ProductOptionItem
+                    {
+                        Id =
+                            reader.GetInt32(
+                                reader.GetOrdinal("Id")),
+
+                        Code =
+                            reader.GetString(
+                                reader.GetOrdinal("Code")),
+
+                        Name =
+                            reader.GetString(
+                                reader.GetOrdinal("Name")),
+
+                        StandardRatePerHour =
+                            reader.GetInt32(
+                                reader.GetOrdinal(
+                                    "StandardRatePerHour"))
+                    };
+                }
+            }
+        }
+
+        private static ProductOptionItem
+            LoadProductByNameOrCode(
+                SqlConnection connection,
+                SqlTransaction transaction,
+                string productNameOrCode)
+        {
+            if (string.IsNullOrWhiteSpace(
+                    productNameOrCode))
+            {
+                return null;
+            }
+
+            const string sql = @"
+SELECT TOP (1)
+    Id,
+    Code,
+    Name,
+    StandardRatePerHour
+FROM dbo.ProductionProducts
+WHERE Name = @Value
+   OR Code = @Value
+ORDER BY
+    CASE WHEN Name = @Value THEN 0 ELSE 1 END,
+    Id;";
+
+            using (SqlCommand command =
+                   new SqlCommand(
+                       sql,
+                       connection,
+                       transaction))
+            {
+                command.Parameters.Add(
+                    "@Value",
+                    SqlDbType.NVarChar,
+                    150).Value =
+                    productNameOrCode.Trim();
+
+                using (SqlDataReader reader =
+                       command.ExecuteReader())
+                {
+                    if (!reader.Read())
+                    {
+                        return null;
+                    }
+
+                    return new ProductOptionItem
+                    {
+                        Id =
+                            reader.GetInt32(
+                                reader.GetOrdinal("Id")),
+
+                        Code =
+                            reader.GetString(
+                                reader.GetOrdinal("Code")),
+
+                        Name =
+                            reader.GetString(
+                                reader.GetOrdinal("Name")),
+
+                        StandardRatePerHour =
+                            reader.GetInt32(
+                                reader.GetOrdinal(
+                                    "StandardRatePerHour"))
+                    };
+                }
+            }
+        }
+
+        private static IDictionary<int, ProductChangeSnapshot>
+            LoadChanges(
+                SqlConnection connection,
+                SqlTransaction transaction,
+                int boardId)
+        {
+            const string sql = @"
+SELECT
+    EffectiveHourNumber,
+    NewProductId,
+    NewProductCodeSnapshot,
+    NewProductNameSnapshot,
+    NewRatePerHourSnapshot,
+    ChangeoverMinutes,
+    Reason
+FROM dbo.ProductionBoardProductChanges
+WHERE ProductionBoardId = @BoardId
+ORDER BY EffectiveHourNumber;";
+
+            IDictionary<int, ProductChangeSnapshot> changes =
+                new Dictionary<int, ProductChangeSnapshot>();
+
+            using (SqlCommand command =
+                   new SqlCommand(
+                       sql,
+                       connection,
+                       transaction))
+            {
+                command.Parameters.Add(
+                    "@BoardId",
+                    SqlDbType.Int).Value =
+                    boardId;
+
+                using (SqlDataReader reader =
+                       command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        int hourNumber =
+                            Convert.ToInt32(
+                                reader["EffectiveHourNumber"],
+                                CultureInfo.InvariantCulture);
+
+                        changes[hourNumber] =
+                            new ProductChangeSnapshot
+                            {
+                                EffectiveHourNumber =
+                                    hourNumber,
+
+                                NewProductId =
+                                    reader.GetInt32(
+                                        reader.GetOrdinal(
+                                            "NewProductId")),
+
+                                NewProductCode =
+                                    reader.GetString(
+                                        reader.GetOrdinal(
+                                            "NewProductCodeSnapshot")),
+
+                                NewProductName =
+                                    reader.GetString(
+                                        reader.GetOrdinal(
+                                            "NewProductNameSnapshot")),
+
+                                NewRatePerHour =
+                                    reader.GetInt32(
+                                        reader.GetOrdinal(
+                                            "NewRatePerHourSnapshot")),
+
+                                ChangeoverMinutes =
+                                    reader.GetInt32(
+                                        reader.GetOrdinal(
+                                            "ChangeoverMinutes")),
+
+                                Reason =
+                                    reader.IsDBNull(
+                                        reader.GetOrdinal("Reason"))
+                                        ? string.Empty
+                                        : reader.GetString(
+                                            reader.GetOrdinal("Reason"))
+                            };
+                    }
+                }
+            }
+
+            return changes;
+        }
+
+        private static ProductPlanData BuildPlan(
+            IList<ProductOptionItem> products,
+            BoardInitialProduct initialProduct,
+            IDictionary<int, ProductChangeSnapshot> changes)
+        {
+            ProductPlanData plan =
+                new ProductPlanData
+                {
+                    Products =
+                        products ??
+                        new List<ProductOptionItem>()
+                };
+
+            ProductSnapshot currentProduct =
+                new ProductSnapshot
+                {
+                    ProductId =
+                        initialProduct.ProductId,
+
+                    ProductCode =
+                        initialProduct.ProductCode,
+
+                    ProductName =
+                        initialProduct.ProductName,
+
+                    RatePerHour =
+                        initialProduct.RatePerHour
+                };
+
+            int cumulativeTarget = 0;
+            ISet<int> usedProducts =
+                new HashSet<int>();
+
+            for (int hourNumber = 1;
+                 hourNumber <= 8;
+                 hourNumber++)
+            {
+                ProductChangeSnapshot change = null;
+                bool isChange =
+                    changes != null &&
+                    changes.TryGetValue(
+                        hourNumber,
+                        out change);
+
+                string previousProductName =
+                    string.Empty;
+
+                int changeoverMinutes = 0;
+                string changeReason =
+                    string.Empty;
+
+                if (isChange)
+                {
+                    previousProductName =
+                        currentProduct.ProductName;
+
+                    currentProduct =
+                        new ProductSnapshot
+                        {
+                            ProductId =
+                                change.NewProductId,
+
+                            ProductCode =
+                                change.NewProductCode,
+
+                            ProductName =
+                                change.NewProductName,
+
+                            RatePerHour =
+                                change.NewRatePerHour
+                        };
+
+                    changeoverMinutes =
+                        change.ChangeoverMinutes;
+
+                    changeReason =
+                        change.Reason ??
+                        string.Empty;
+                }
+
+                int plannedStopMinutes =
+                    GetPlannedStopMinutes(
+                        hourNumber);
+
+                int availableMinutes =
+                    Math.Max(
+                        0,
+                        60 -
+                        plannedStopMinutes -
+                        changeoverMinutes);
+
+                int targetQuantity =
+                    Convert.ToInt32(
+                        Math.Round(
+                            currentProduct.RatePerHour *
+                            availableMinutes /
+                            60m,
+                            0,
+                            MidpointRounding.AwayFromZero),
+                        CultureInfo.InvariantCulture);
+
+                cumulativeTarget +=
+                    targetQuantity;
+
+                usedProducts.Add(
+                    currentProduct.ProductId);
+
+                plan.Hours.Add(
+                    new BoardHourProductPlanItem
+                    {
+                        HourNumber =
+                            hourNumber,
+
+                        ProductId =
+                            currentProduct.ProductId,
+
+                        ProductCode =
+                            currentProduct.ProductCode,
+
+                        ProductName =
+                            currentProduct.ProductName,
+
+                        RatePerHour =
+                            currentProduct.RatePerHour,
+
+                        PlannedStopMinutes =
+                            plannedStopMinutes,
+
+                        ChangeoverMinutes =
+                            changeoverMinutes,
+
+                        AvailableMinutes =
+                            availableMinutes,
+
+                        TargetQuantity =
+                            targetQuantity,
+
+                        TargetCumulative =
+                            cumulativeTarget,
+
+                        IsProductChange =
+                            isChange,
+
+                        PreviousProductName =
+                            previousProductName,
+
+                        ChangeReason =
+                            changeReason
+                    });
+            }
+
+            plan.IsMixed =
+                usedProducts.Count > 1;
+
+            plan.HeaderProductText =
+                plan.IsMixed
+                    ? "Mixed production"
+                    : plan.Hours.Count > 0
+                        ? plan.Hours[0].ProductName
+                        : initialProduct.ProductName;
+
+            return plan;
+        }
+
+        private static void PersistPlan(
+            SqlConnection connection,
+            SqlTransaction transaction,
+            int boardId,
+            IList<BoardHourProductPlanItem> hours)
+        {
+            const string sql = @"
+UPDATE dbo.ProductionBoardHours
+SET
+    ProductId = @ProductId,
+    ProductNameSnapshot = @ProductNameSnapshot,
+    RatePerHourSnapshot = @RatePerHourSnapshot,
+    PlannedStopMinutes = @PlannedStopMinutes,
+    ChangeoverMinutes = @ChangeoverMinutes,
+    TargetQuantity = @TargetQuantity,
+    UpdatedAt = SYSUTCDATETIME()
+WHERE ProductionBoardId = @BoardId
+  AND HourNumber = @HourNumber;";
+
+            foreach (BoardHourProductPlanItem hour in
+                     hours.OrderBy(
+                         item => item.HourNumber))
+            {
+                using (SqlCommand command =
+                       new SqlCommand(
+                           sql,
+                           connection,
+                           transaction))
+                {
+                    command.Parameters.Add(
+                        "@ProductId",
+                        SqlDbType.Int).Value =
+                        hour.ProductId;
+
+                    command.Parameters.Add(
+                        "@ProductNameSnapshot",
+                        SqlDbType.NVarChar,
+                        150).Value =
+                        hour.ProductName;
+
+                    command.Parameters.Add(
+                        "@RatePerHourSnapshot",
+                        SqlDbType.Int).Value =
+                        hour.RatePerHour;
+
+                    command.Parameters.Add(
+                        "@PlannedStopMinutes",
+                        SqlDbType.Int).Value =
+                        hour.PlannedStopMinutes;
+
+                    command.Parameters.Add(
+                        "@ChangeoverMinutes",
+                        SqlDbType.Int).Value =
+                        hour.ChangeoverMinutes;
+
+                    command.Parameters.Add(
+                        "@TargetQuantity",
+                        SqlDbType.Int).Value =
+                        hour.TargetQuantity;
+
+                    command.Parameters.Add(
+                        "@BoardId",
+                        SqlDbType.Int).Value =
+                        boardId;
+
+                    command.Parameters.Add(
+                        "@HourNumber",
+                        SqlDbType.TinyInt).Value =
+                        hour.HourNumber;
+
+                    int affectedRows =
+                        command.ExecuteNonQuery();
+
+                    if (affectedRows == 0)
+                    {
+                        throw new InvalidOperationException(
+                            "Production hour H" +
+                            hour.HourNumber.ToString(
+                                CultureInfo.InvariantCulture) +
+                            " does not exist.");
+                    }
+                }
+            }
+        }
+
+        private static void UpsertChange(
+            SqlConnection connection,
+            SqlTransaction transaction,
+            ProductChangeRequest request,
+            ProductSnapshot previousProduct,
+            ProductOptionItem newProduct,
+            string changedBy)
+        {
+            const string sql = @"
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.ProductionBoardProductChanges
+    WHERE ProductionBoardId = @BoardId
+      AND EffectiveHourNumber = @EffectiveHourNumber
+)
+BEGIN
+    UPDATE dbo.ProductionBoardProductChanges
+    SET
+        PreviousProductId = @PreviousProductId,
+        PreviousProductCodeSnapshot = @PreviousProductCodeSnapshot,
+        PreviousProductNameSnapshot = @PreviousProductNameSnapshot,
+        PreviousRatePerHourSnapshot = @PreviousRatePerHourSnapshot,
+        NewProductId = @NewProductId,
+        NewProductCodeSnapshot = @NewProductCodeSnapshot,
+        NewProductNameSnapshot = @NewProductNameSnapshot,
+        NewRatePerHourSnapshot = @NewRatePerHourSnapshot,
+        ChangeoverMinutes = @ChangeoverMinutes,
+        Reason = @Reason,
+        ChangedBy = @ChangedBy,
+        ChangedAt = SYSUTCDATETIME()
+    WHERE ProductionBoardId = @BoardId
+      AND EffectiveHourNumber = @EffectiveHourNumber;
+END
+ELSE
+BEGIN
+    INSERT INTO dbo.ProductionBoardProductChanges
+    (
+        ProductionBoardId,
+        EffectiveHourNumber,
+        PreviousProductId,
+        PreviousProductCodeSnapshot,
+        PreviousProductNameSnapshot,
+        PreviousRatePerHourSnapshot,
+        NewProductId,
+        NewProductCodeSnapshot,
+        NewProductNameSnapshot,
+        NewRatePerHourSnapshot,
+        ChangeoverMinutes,
+        Reason,
+        ChangedBy
+    )
+    VALUES
+    (
+        @BoardId,
+        @EffectiveHourNumber,
+        @PreviousProductId,
+        @PreviousProductCodeSnapshot,
+        @PreviousProductNameSnapshot,
+        @PreviousRatePerHourSnapshot,
+        @NewProductId,
+        @NewProductCodeSnapshot,
+        @NewProductNameSnapshot,
+        @NewRatePerHourSnapshot,
+        @ChangeoverMinutes,
+        @Reason,
+        @ChangedBy
+    );
+END;";
+
+            using (SqlCommand command =
+                   new SqlCommand(
+                       sql,
+                       connection,
+                       transaction))
+            {
+                command.Parameters.Add(
+                    "@BoardId",
+                    SqlDbType.Int).Value =
+                    request.BoardId;
+
+                command.Parameters.Add(
+                    "@EffectiveHourNumber",
+                    SqlDbType.TinyInt).Value =
+                    request.EffectiveHourNumber;
+
+                command.Parameters.Add(
+                    "@PreviousProductId",
+                    SqlDbType.Int).Value =
+                    previousProduct.ProductId;
+
+                command.Parameters.Add(
+                    "@PreviousProductCodeSnapshot",
+                    SqlDbType.NVarChar,
+                    50).Value =
+                    previousProduct.ProductCode;
+
+                command.Parameters.Add(
+                    "@PreviousProductNameSnapshot",
+                    SqlDbType.NVarChar,
+                    150).Value =
+                    previousProduct.ProductName;
+
+                command.Parameters.Add(
+                    "@PreviousRatePerHourSnapshot",
+                    SqlDbType.Int).Value =
+                    previousProduct.RatePerHour;
+
+                command.Parameters.Add(
+                    "@NewProductId",
+                    SqlDbType.Int).Value =
+                    newProduct.Id;
+
+                command.Parameters.Add(
+                    "@NewProductCodeSnapshot",
+                    SqlDbType.NVarChar,
+                    50).Value =
+                    newProduct.Code;
+
+                command.Parameters.Add(
+                    "@NewProductNameSnapshot",
+                    SqlDbType.NVarChar,
+                    150).Value =
+                    newProduct.Name;
+
+                command.Parameters.Add(
+                    "@NewRatePerHourSnapshot",
+                    SqlDbType.Int).Value =
+                    newProduct.StandardRatePerHour;
+
+                command.Parameters.Add(
+                    "@ChangeoverMinutes",
+                    SqlDbType.Int).Value =
+                    request.ChangeoverMinutes;
+
+                command.Parameters.Add(
+                    "@Reason",
+                    SqlDbType.NVarChar,
+                    500).Value =
+                    string.IsNullOrWhiteSpace(
+                        request.Reason)
+                        ? (object)DBNull.Value
+                        : request.Reason.Trim();
+
+                command.Parameters.Add(
+                    "@ChangedBy",
+                    SqlDbType.NVarChar,
+                    256).Value =
+                    string.IsNullOrWhiteSpace(
+                        changedBy)
+                        ? (object)DBNull.Value
+                        : changedBy.Trim();
+
+                command.ExecuteNonQuery();
+            }
+        }
+
+        private static ProductSnapshot ResolveProductBeforeHour(
+            BoardInitialProduct initialProduct,
+            IDictionary<int, ProductChangeSnapshot> changes,
+            int effectiveHourNumber)
+        {
+            ProductSnapshot current =
+                new ProductSnapshot
+                {
+                    ProductId =
+                        initialProduct.ProductId,
+
+                    ProductCode =
+                        initialProduct.ProductCode,
+
+                    ProductName =
+                        initialProduct.ProductName,
+
+                    RatePerHour =
+                        initialProduct.RatePerHour
+                };
+
+            if (changes == null)
+            {
+                return current;
+            }
+
+            foreach (KeyValuePair<int, ProductChangeSnapshot> pair
+                     in changes.OrderBy(
+                         item => item.Key))
+            {
+                if (pair.Key >= effectiveHourNumber)
+                {
+                    break;
+                }
+
+                ProductChangeSnapshot change =
+                    pair.Value;
+
+                current =
+                    new ProductSnapshot
+                    {
+                        ProductId =
+                            change.NewProductId,
+
+                        ProductCode =
+                            change.NewProductCode,
+
+                        ProductName =
+                            change.NewProductName,
+
+                        RatePerHour =
+                            change.NewRatePerHour
+                    };
+            }
+
+            return current;
+        }
+
+        private static int GetPlannedStopMinutes(
+            int hourNumber)
+        {
+            if (hourNumber < 1 ||
+                hourNumber >
+                PlannedStopMinutesByHour.Length)
+            {
+                return 0;
+            }
+
+            return PlannedStopMinutesByHour[
+                hourNumber - 1];
+        }
+
+        private static void UpdateBoardTimestamp(
+            SqlConnection connection,
+            SqlTransaction transaction,
+            int boardId)
+        {
+            const string sql = @"
+UPDATE dbo.ProductionBoards
+SET UpdatedAt = SYSUTCDATETIME()
+WHERE Id = @BoardId;";
+
+            using (SqlCommand command =
+                   new SqlCommand(
+                       sql,
+                       connection,
+                       transaction))
+            {
+                command.Parameters.Add(
+                    "@BoardId",
+                    SqlDbType.Int).Value =
+                    boardId;
+
+                command.ExecuteNonQuery();
+            }
+        }
+
+        private sealed class BoardInitialProduct
+        {
+            public int ProductId { get; set; }
+
+            public string ProductCode { get; set; }
+
+            public string ProductName { get; set; }
+
+            public int RatePerHour { get; set; }
+        }
+
+        private sealed class ProductSnapshot
+        {
+            public int ProductId { get; set; }
+
+            public string ProductCode { get; set; }
+
+            public string ProductName { get; set; }
+
+            public int RatePerHour { get; set; }
+        }
+
+        private sealed class ProductChangeSnapshot
+        {
+            public int EffectiveHourNumber { get; set; }
+
+            public int NewProductId { get; set; }
+
+            public string NewProductCode { get; set; }
+
+            public string NewProductName { get; set; }
+
+            public int NewRatePerHour { get; set; }
+
+            public int ChangeoverMinutes { get; set; }
+
+            public string Reason { get; set; }
+        }
+    }
 }
